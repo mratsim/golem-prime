@@ -32,8 +32,9 @@ type
     # Size 450 Bytes - fits in 7.01 cache lines :/ (64B per cache lines - 7*64B = 448B)
     board: Board[N]
     next_player: range[Black..White]
-    nb_stones: tuple[black, white: int16] # Depending on the ruleset we might need to track captures instead
     last_move: Move
+    nb_stones: tuple[black, white: int16] # Depending on the ruleset we might need to track captures instead
+
 
   GameState*[N: static[int]] = object
     ## Besides the board state, immutable data related to the game
@@ -48,6 +49,9 @@ when isMainModule:
 
   echo "Size of Board + State: " & $sizeof(a)
   echo "Size of Board: " & $sizeof(a.board)
+  echo "Size of next player: " & $sizeof(a.next_player)
+  echo "Size of nb_stones: " & $sizeof(a.nb_stones)
+  echo "Size of last move: " & $sizeof(a.last_move)
   echo "Size of Move: " & $sizeof(Move)
   echo "Size of Intersection: " & $sizeof(Intersection)
 
