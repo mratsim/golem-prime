@@ -2,7 +2,7 @@
 # Distributed under the Apache v2 License
 # (license terms are at https://www.apache.org/licenses/LICENSE-2.0).
 
-import tables
+import tables, strutils
 
 type
   Stone* = enum
@@ -55,18 +55,17 @@ proc initBoard(size: static[int]): Board[size] {.noInit, noSideEffect.} =
     else:
       mstone = Empty
 
-
-const stone_display = {
-  Empty: '.',
-  Black: 'X',
-  White: 'O',
-  Border: ' '}.toTable
-
-proc `$`*[N: static[int]](board: Board[N]): string =
+proc `$`*[N: static[int]](board: Board[N]): string {.noSideEffect.}=
   # Display a go board
 
   # The go board as an extra border on the top, left, right and bottom
   # So a 19x19 board is actually 21x21 and the end of line is at the 20th position of each line
+
+  const stone_display = {
+    Empty: '.',
+    Black: 'X',
+    White: 'O',
+    Border: ' '}.toTable
 
   result = ""
 
@@ -74,6 +73,20 @@ proc `$`*[N: static[int]](board: Board[N]): string =
     result.add stone_display[stone]
     if i mod (N+2) == N+1: # Test if we reach end of line
       result.add '\n'
+
+proc mapCoord(coordStr: string): Coord  {.inline, noInit, noSideEffect.} =
+
+  # Constraints
+  #   - No space in input
+  #   - board size 25 at most
+  #   - square board
+  #   - input of length 2 or 3 like A1 and Q16
+  #   - input in uppercase
+  assert coordStr.len <= 3
+  const coordX = " ABCDEFGHJKLMNOPQRSTUVWXYZ "
+
+  result.x = int8 coordX.find(coordStr[0])
+  result.y = int8 parseInt coordStr[1 .. coordStr.high]
 
 when isMainModule:
 
@@ -89,4 +102,6 @@ when isMainModule:
   echo "Size of Intersection: " & $sizeof(Stone)
 
   echo initBoard(9)
+  echo mapCoord("Q16")
+  echo mapCoord("B10")
 
