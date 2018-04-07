@@ -9,15 +9,17 @@ type
     Empty, Black, White, Border # TODO, will having Empty = 0 or Black = 0 + White = 1 faster?
     # If memory/cache speed is a bottleneck, consider packing
 
-  Coord* = tuple[x, y: int8]
+  # We index from 0
+  Coord*[N: static[int]] = tuple[col, row: range[0 .. (N-1)]]
+  Point*[N: static[int]] = range[0 .. (N + 2) * (N + 2) - 1]  # Easily switch how to index for perf testing: native word size (int) vs cache locality (int16)
 
   MoveKind* = enum
     Play, Pass, Resign, Undo
 
-  Move* = object
+  Move*[N: static[int]] = object
     case kind: MoveKind
     of Play:
-      coord: Coord
+      pos: Point[N]
     else:
       discard
 
@@ -33,9 +35,8 @@ type
     # Size 450 Bytes - fits in 7.01 cache lines :/ (64B per cache lines - 7*64B = 448B)
     board: Board[N]
     next_player: range[Black..White]
-    last_move: Move
+    last_move: Move[N]
     nb_stones: tuple[black, white: int16] # Depending on the ruleset we might need to track captures instead
-
 
   GameState*[N: static[int]] = object
     ## Besides the board state, immutable data related to the game
@@ -43,7 +44,7 @@ type
     komi: float32
     # ruleset
 
-proc initBoard(size: static[int]): Board[size] {.noInit, noSideEffect.} =
+proc initBoard(size: static[int]): Board[size] {.noInit.} =
 
   for i, mstone in result.mpairs:
     # Set borders
@@ -55,7 +56,7 @@ proc initBoard(size: static[int]): Board[size] {.noInit, noSideEffect.} =
     else:
       mstone = Empty
 
-proc `$`*[N: static[int]](board: Board[N]): string {.noSideEffect.}=
+proc `$`*[N: static[int]](board: Board[N]): string =
   # Display a go board
 
   # The go board as an extra border on the top, left, right and bottom
@@ -74,7 +75,7 @@ proc `$`*[N: static[int]](board: Board[N]): string {.noSideEffect.}=
     if i mod (N+2) == N+1: # Test if we reach end of line
       result.add '\n'
 
-proc mapCoord(coordStr: string): Coord  {.inline, noInit, noSideEffect.} =
+proc toCoord(coordStr: string, board_size: static[int]): Coord[board_size]  {.inline, noInit.} =
 
   # Constraints
   #   - No space in input
@@ -83,10 +84,10 @@ proc mapCoord(coordStr: string): Coord  {.inline, noInit, noSideEffect.} =
   #   - input of length 2 or 3 like A1 and Q16
   #   - input in uppercase
   assert coordStr.len <= 3
-  const coordX = " ABCDEFGHJKLMNOPQRSTUVWXYZ "
+  const cols = " ABCDEFGHJKLMNOPQRSTUVWXYZ "
 
-  result.x = int8 coordX.find(coordStr[0])
-  result.y = int8 parseInt coordStr[1 .. coordStr.high]
+  result.col = uint8 cols.find(coordStr[0])
+  result.row = uint8 parseInt coordStr[1 .. coordStr.high]
 
 when isMainModule:
 
@@ -98,10 +99,10 @@ when isMainModule:
   echo "Size of next player: " & $sizeof(a.next_player)
   echo "Size of nb_stones: " & $sizeof(a.nb_stones)
   echo "Size of last move: " & $sizeof(a.last_move)
-  echo "Size of Move: " & $sizeof(Move)
+  echo "Size of Move: " & $sizeof(Move[19])
   echo "Size of Intersection: " & $sizeof(Stone)
 
-  echo initBoard(9)
-  echo mapCoord("Q16")
-  echo mapCoord("B10")
+  echo $initBoard(9)
+  echo toCoord("Q16", 19)
+  echo toCoord("B1", 19)
 
