@@ -2,6 +2,29 @@
 # Distributed under the Apache v2 License
 # (license terms are at https://www.apache.org/licenses/LICENSE-2.0).
 
+import macros
+
+macro set_of_points*(size: static[int]): untyped =
+  ## Workaround to set raising "ordinal type expected"
+  ## when used with static[int]: https://github.com/nim-lang/Nim/issues/7546
+
+  # Returns set[ -1'i16 .. (N+2)^2 - 1]
+
+  var nodeStartRange = newNimNode(nnkInt16Lit)
+  nodeStartRange.intVal = -1
+
+  var nodeEndRange = newNimNode(nnkInt16Lit)
+  nodeEndRange.intVal = (size+2) * (size+2) - 1
+
+  result = nnkBracketExpr.newTree(
+    newIdentNode("set"),
+    nnkInfix.newTree(
+      newIdentNode(".."),
+      nodeStartRange,
+      nodeEndRange
+    )
+  )
+
 type
   Intersection* = enum
     Empty, Black, White, Border # TODO, will having Empty = 0 or Black = 0 + White = 1 faster?
@@ -41,6 +64,10 @@ type
   Board*[N: static[int]] = array[(N + 2) * (N + 2), Intersection]
     # To ease boarder detection in algorithms, boarders are also represented as an (invalid) intersection
 
+  EmptyPoints[N: static[int16]] = object
+    data: set_of_points(N) # Broken https://github.com/nim-lang/Nim/issues/7547
+    len: int16 # sets have a card(inality) proc but it is not O(1), it traverse both set and unset values
+
   BoardState*[N: static[int16]] = object
     ## Dynamic data related to the board
     # Only store what is essential for board evaluation as
@@ -54,12 +81,9 @@ type
 
     # With black stones and empty positions we can recompute white score
     nb_black_stones*: int16      # Depending on the ruleset we might need to track captures instead
+    empty_points*: EmptyPoints[N]  # Keep track of empty intersections
 
-    # Todo: evaluate using sets or table or intset
-    empty_points*: seq[Point[N]] # Heap-allocated, preallocate before multithreading/loops
-    empty_points_idx*: seq[int]   # Position of each empty_points for O(1) del and add from the middle of the seq
-
-    ko_pos*: Point[N]             # Last ko position
+    ko_pos*: Point[N]            # Last ko position
 
     # Groups: this avoid recurring floodfill calls to determine which group a stone is part of.
     # This was a huge bottleneck.
@@ -79,3 +103,8 @@ const MaxNbMoves* = 512
   # This is a soft limit on the max number of moves
   # It is extremely rare to exceed 400 moves, longest game recorded is 411 moves.
   # Yamabe Toshiro, 5p vs Hoshino Toshi 3p, Japan 1950
+
+when isMainModule:
+
+  var a: EmptyPoints[19]
+  echo a.sizeof

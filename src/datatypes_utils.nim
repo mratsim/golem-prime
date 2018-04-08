@@ -5,9 +5,22 @@
 import  strutils, tables, algorithm,
         ./datatypes
 
-proc initBoard*(size: static[int]): Board[size] {.noInit.} =
+proc initBoardState*(size: static[int16]): BoardState[size] {.noInit.} =
 
-  for i, mstone in result.mpairs:
+  const adj_size_squared = (size+2) * (size+2)
+    ## Squared size adjusted to take borders into account
+
+  result.next_player = Black
+  result.prev_moves = newSeqOfCap[PlayerMove[size]](MaxNbMoves)
+  result.nb_black_stones = 0
+  result.ko_pos = -1
+  result.groups = newSeq[Group](adj_size_squared)
+  result.group_id = newSeq[Point[size]](adj_size_squared) # Note: we do not use newSeqUninitialized to keep the code
+  result.group_id.fill(-1)                                # compatible with the Javascript backend
+  result.group_next = newSeq[Point[size]](adj_size_squared) # Note: we do not use newSeqUninitialized to keep the code
+  result.group_next.fill(-1)                                # compatible with the Javascript backend
+
+  for i, mstone in result.board.mpairs:
     # Set borders
     if  i < size+2 or             # first row
         i >= (size+1)*(size+2) or # last row
@@ -16,24 +29,8 @@ proc initBoard*(size: static[int]): Board[size] {.noInit.} =
       mstone = Border
     else:
       mstone = Empty
-
-proc initBoardState*(size: static[int]): BoardState[size] {.noInit.} =
-
-  const adj_size_squared = (size+2) * (size+2)
-    ## Squared size adjusted to take borders into account
-
-  result.board = initboard(size)
-  result.next_player = Black
-  result.prev_moves = newSeqOfCap[PlayerMove[size]](MaxNbMoves)
-  result.nb_black_stones = 0
-  result.empty_points = newSeqofCap[Point[size]](size * size)
-  result.empty_points_idx = newSeq[int](adj_size_squared)
-  result.ko_pos = -1
-  result.groups = newSeq[Group](adj_size_squared)
-  result.group_id = newSeq[Point[size]](adj_size_squared) # Note: we do not use newSeqUninitialized to keep the code
-  result.group_id.fill(-1)                                # compatible with the Javascript backend
-  result.group_next = newSeq[Point[size]](adj_size_squared) # Note: we do not use newSeqUninitialized to keep the code
-  result.group_next.fill(-1)                                # compatible with the Javascript backend
+      result.empty_points.data.incl i
+      result.empty_points.len += 1
 
 proc `$`*[N: static[int]](board: Board[N]): string =
   # Display a go board
