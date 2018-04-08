@@ -5,20 +5,52 @@
 import  strutils, tables, algorithm,
         ./datatypes
 
-proc initBoardState*(size: static[int16]): BoardState[size] {.noInit.} =
+proc contains*(x: EmptyPoints, point: Point): bool {.inline.} =
+  x.data.contains(point)
 
-  const adj_size_squared = (size+2) * (size+2)
+proc incl*(x: var EmptyPoints, point: Point) {.inline.} =
+  ## Add a Point to a set of EmptyPoints
+  ## The Point should not be in EmptyPoints already. It will throw
+  ## an error in debug mode otherwise
+
+  assert point notin x, "Error: " & $point & " is already in EmptyPoints"
+  # We assume point is not already in the set to avoid branching when updating the count
+
+  x.data.incl point
+  inc x.len
+
+proc excl*(x: var EmptyPoints, point: Point) {.inline.} =
+  ## Remove a Point to a set of EmptyPoints
+  ## The Point should be in EmptyPoints. It will throw
+  ## an error in debug mode otherwise
+
+  assert point in x, "Error: " & $point & " is not in EmptyPoints"
+  # We assume point is in the set to avoid branching when updating the count
+
+  x.data.excl point
+  dec x.len
+
+proc newGroupsGraph*[N: static[int16]](gg: var GroupsGraph[N]) =
+
+  const size_squared_with_borders = (N+2) * (N+2)
     ## Squared size adjusted to take borders into account
+
+  newSeq(gg.groups, size_squared_with_borders)
+  # Note: we do not use newSeqUninitialized to keep the code
+  #       compatible with the Javascript backend
+
+  newSeq(gg.group_id, size_squared_with_borders)
+  gg.group_id.fill(-1)
+  newSeq(gg.group_next, size_squared_with_borders)
+  gg.group_next.fill(-1)
+
+proc newBoardState*(size: static[int16]): BoardState[size] {.noInit.} =
 
   result.next_player = Black
   result.prev_moves = newSeqOfCap[PlayerMove[size]](MaxNbMoves)
   result.nb_black_stones = 0
   result.ko_pos = -1
-  result.groups = newSeq[Group](adj_size_squared)
-  result.group_id = newSeq[Point[size]](adj_size_squared) # Note: we do not use newSeqUninitialized to keep the code
-  result.group_id.fill(-1)                                # compatible with the Javascript backend
-  result.group_next = newSeq[Point[size]](adj_size_squared) # Note: we do not use newSeqUninitialized to keep the code
-  result.group_next.fill(-1)                                # compatible with the Javascript backend
+  newGroupsGraph[size](result.groups_graph)
 
   for i, mstone in result.board.mpairs:
     # Set borders
@@ -29,8 +61,7 @@ proc initBoardState*(size: static[int16]): BoardState[size] {.noInit.} =
       mstone = Border
     else:
       mstone = Empty
-      result.empty_points.data.incl i
-      result.empty_points.len += 1
+      result.empty_points.incl i.int16
 
 proc `$`*[N: static[int]](board: Board[N]): string =
   # Display a go board
@@ -67,7 +98,7 @@ proc toCoord*(coordStr: string, board_size: static[int]): Coord[board_size]  {.i
 
 when isMainModule:
 
-  let a = initBoardState(19)
+  let a = newBoardState(19)
   #echo repr a
 
   echo "Size of Board + State: " & $sizeof(a)
@@ -76,6 +107,6 @@ when isMainModule:
   echo "Size of Move: " & $sizeof(Move[19])
   echo "Size of Intersection: " & $sizeof(Intersection)
 
-  echo $initBoard(9)
+  echo $newBoardState(9)
   echo toCoord("Q16", 19)
   echo toCoord("B1", 19)
