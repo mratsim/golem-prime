@@ -5,7 +5,7 @@
 import tables, strutils
 
 type
-  Stone* = enum
+  Intersection* = enum
     Empty, Black, White, Border # TODO, will having Empty = 0 or Black = 0 + White = 1 faster?
     # If memory/cache speed is a bottleneck, consider packing
 
@@ -17,13 +17,21 @@ type
     Play, Pass, Resign, Undo
 
   Move*[N: static[int16]] = object
-    case kind: MoveKind
+    case kind*: MoveKind
     of Play:
-      pos: Point[N]
+      pos*: Point[N]
     else:
       discard
 
-  Board*[N: static[int]] = array[(N + 2) * (N + 2), Stone]
+  Group* = object
+    color*: Intersection
+    nb_stones*: int16
+    nb_pseudo_libs*: int16
+    # Graph theory
+    sum_degree_vertices*: int16
+    sum_square_degree_vertices*: int32
+
+  Board*[N: static[int]] = array[(N + 2) * (N + 2), Intersection]
     # To ease boarder detection in algorithms, boarders are also represented as an (invalid) intersection
 
   BoardState*[N: static[int16]] = object
@@ -33,15 +41,31 @@ type
     # during Monte-Carlo Tree Search.
     #
     # Size 450 Bytes - fits in 7.01 cache lines :/ (64B per cache lines - 7*64B = 448B)
-    board: Board[N]
-    next_player: range[Black..White]
-    last_move: Move[N]
-    nb_stones: tuple[black, white: int16] # Depending on the ruleset we might need to track captures instead
+    board*: Board[N]
+    next_player*: range[Black..White]
+    prev_moves*: seq[Move[N]]
+
+    # With black stones and empty positions we can recompute white score
+    nb_black_stones*: int16      # Depending on the ruleset we might need to track captures instead
+
+    # Todo: evaluate using sets or table or intset
+    empty_points*: seq[Point[N]] # Heap-allocated, preallocate before multithreading/loops
+    empty_points_idx: seq[int]   # Position of each empty_points for O(1) del and add from the middle of the seq
+
+    ko_pos: Point[N]             # Last ko position
+
+    # Groups: this avoid recurring floodfill calls to determine which group a stone is part of.
+    # This was a huge bottleneck.
+    # However it it heap-allocated and so requires preallocation before multithreading/for loops
+    # Todo evaluate using linked lists
+    groups: seq[Group]
+    group_id: seq[Point[N]]   # one point will be chosen as the id of the group
+    group_next: seq[Point[N]] # next stone in the group (linked-list)
 
   GameState*[N: static[int16]] = object
     ## Besides the board state, immutable data related to the game
-    board_state: BoardState[N]
-    komi: float32
+    board_state*: BoardState[N]
+    komi*: float32
     # ruleset
 
 proc initBoard(size: static[int]): Board[size] {.noInit.} =
@@ -97,10 +121,8 @@ when isMainModule:
   echo "Size of Board + State: " & $sizeof(a)
   echo "Size of Board: " & $sizeof(a.board)
   echo "Size of next player: " & $sizeof(a.next_player)
-  echo "Size of nb_stones: " & $sizeof(a.nb_stones)
-  echo "Size of last move: " & $sizeof(a.last_move)
   echo "Size of Move: " & $sizeof(Move[19])
-  echo "Size of Intersection: " & $sizeof(Stone)
+  echo "Size of Intersection: " & $sizeof(Intersection)
 
   echo $initBoard(9)
   echo toCoord("Q16", 19)
