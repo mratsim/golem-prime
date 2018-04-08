@@ -7,4 +7,3 @@ import ./datatypes
 proc neighbors*[N: static[int16]](idx: Point[N]): array[4, Point[N]] {.inline.}=
   [idx-1, idx+1, idx - (N+2), idx + (N+2)]
 
-
