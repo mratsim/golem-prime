@@ -11,7 +11,10 @@ type
 
   # We index from 0
   Coord*[N: static[int8]] = tuple[col, row: range[0'i8 .. (N-1)]]
-  Point*[N: static[int16]] = range[0'i16 .. (N + 2) * (N + 2) - 1]  # Easily switch how to index for perf testing: native word size (int) vs cache locality (int16)
+  Point*[N: static[int16]] = range[-1'i16 .. (N + 2) * (N + 2) - 1]  # Easily switch how to index for perf testing: native word size (int) vs cache locality (int16)
+    # -1 is used for ko position: null
+    # TODO something more robust
+    # (object variant or separate in 2 types ValidPoints and Ko Points)
 
   MoveKind* = enum
     Play, Pass, Resign, Undo
