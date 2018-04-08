@@ -10,13 +10,13 @@ type
     # If memory/cache speed is a bottleneck, consider packing
 
   # We index from 0
-  Coord*[N: static[int]] = tuple[col, row: range[0 .. (N-1)]]
-  Point*[N: static[int]] = range[0 .. (N + 2) * (N + 2) - 1]  # Easily switch how to index for perf testing: native word size (int) vs cache locality (int16)
+  Coord*[N: static[int8]] = tuple[col, row: range[0'i8 .. (N-1)]]
+  Point*[N: static[int16]] = range[0'i16 .. (N + 2) * (N + 2) - 1]  # Easily switch how to index for perf testing: native word size (int) vs cache locality (int16)
 
   MoveKind* = enum
     Play, Pass, Resign, Undo
 
-  Move*[N: static[int]] = object
+  Move*[N: static[int16]] = object
     case kind: MoveKind
     of Play:
       pos: Point[N]
@@ -26,7 +26,7 @@ type
   Board*[N: static[int]] = array[(N + 2) * (N + 2), Stone]
     # To ease boarder detection in algorithms, boarders are also represented as an (invalid) intersection
 
-  BoardState*[N: static[int]] = object
+  BoardState*[N: static[int16]] = object
     ## Dynamic data related to the board
     # Only store what is essential for board evaluation as
     # trees of board state are generated thousands of time per second
@@ -38,7 +38,7 @@ type
     last_move: Move[N]
     nb_stones: tuple[black, white: int16] # Depending on the ruleset we might need to track captures instead
 
-  GameState*[N: static[int]] = object
+  GameState*[N: static[int16]] = object
     ## Besides the board state, immutable data related to the game
     board_state: BoardState[N]
     komi: float32
@@ -86,8 +86,8 @@ proc toCoord(coordStr: string, board_size: static[int]): Coord[board_size]  {.in
   assert coordStr.len <= 3
   const cols = " ABCDEFGHJKLMNOPQRSTUVWXYZ "
 
-  result.col = uint8 cols.find(coordStr[0])
-  result.row = uint8 parseInt coordStr[1 .. coordStr.high]
+  result.col = int8 cols.find(coordStr[0])
+  result.row = int8 parseInt coordStr[1 .. coordStr.high]
 
 when isMainModule:
 
