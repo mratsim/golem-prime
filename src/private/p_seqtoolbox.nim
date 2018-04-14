@@ -4,5 +4,5 @@
 
 # Additional seq utilities
 
-proc peek*[T](s: seq[T]): T {.inline.} =
+func peek*[T](s: seq[T]): T {.inline.} =
   s[s.high]
