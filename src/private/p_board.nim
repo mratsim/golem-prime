@@ -52,7 +52,7 @@ when isMainModule:
   echo $newBoardState(9)
 
   echo "\n###### 19x19 board ######"
-  let a = newBoardState(19)
+  var a = newBoardState(19)
   #echo repr a
 
   echo "Size of Board + State: " & $sizeof(a)
@@ -66,3 +66,4 @@ when isMainModule:
   echo toPoint[19](toCoord("A1", 19))
   echo toPoint[19](toCoord("B1", 19))
   echo toPoint[19](toCoord("Q16", 19))
+

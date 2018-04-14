@@ -2,10 +2,8 @@
 # Distributed under the Apache v2 License
 # (license terms are at https://www.apache.org/licenses/LICENSE-2.0).
 
-import  ./private/seqtoolbox,
+import  ./private/p_seqtoolbox,
         ./datatypes
-
-{.this: self.} # Note: this works only for procs not when accessing fields
 
 proc place_stone*(self: var BoardState, color: Intersection, point: Point) =
   ## Place or change the color of a stone at a specified position
