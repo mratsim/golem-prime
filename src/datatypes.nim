@@ -82,7 +82,7 @@ type
   # GroupsMetaPool and GroupIDs form a disjoint sets with union by rank and path compression.
   # GroupsMetaPool is a memory pool and use as needed. TODO: find the upper bound on the number of groups.
   # Groups IDs is an array of "pointers" to the location of the group metadata in the pool.
-  # NextStones allow efficient iteration as an array-backed list.
+  # NextStones allow efficient iteration as an array-backed LinkedRing (circular linkedlist).
   # Arrays are chosen to minimize cache misses and avoid allocations within Monte-Carlo playouts.
   GroupsMetaPool*[N: static[int8]] = array[(N + 2) * (N + 2), GroupMetadata]
   GroupIDs*[N: static[int8]] = array[(N + 2) * (N + 2), GroupID[N]]
@@ -95,7 +95,7 @@ type
     # See implementation notes at https://github.com/mratsim/golem-prime/issues/1
     metadata*: GroupsMetaPool[N]  # Contains the metadata of each groups
     id*: GroupIDs[N]              # map an input point to its group id in "groups".
-    next_stones*: NextStones[N]   # next stone in the group
+    next_stones*: NextStones[N]   # next stone in the group, this is a linked ring (circular).
 
   ################################ Groups ###################################
 
