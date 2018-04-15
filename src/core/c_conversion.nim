@@ -8,7 +8,7 @@ import
 
 ################################ Coordinates ###################################
 
-func toCoord*(coordStr: string, board_size: static[int8]): Coord[board_size] =
+func toCoord(coordStr: string, N: static[int8]): Coord[N] =
 
   # Constraints
   #   - No space in input
@@ -22,7 +22,7 @@ func toCoord*(coordStr: string, board_size: static[int8]): Coord[board_size] =
   result.col = cols.find(coordStr[0]) - 1
   result.row = coordStr[1 .. coordStr.high].parseInt - 1
 
-func toPoint*[N: static[int8]](coord: Coord[N]): Point[N] {.inline.}=
+func toPoint[N: static[int8]](coord: Coord[N]): Point[N] {.inline.}=
   ## Convert a tuple of coordinate to index representation adjusted for borders
   # We use a column-major representation i.e:
   #  - A2 <-> (0, 1) has index "1" adjusted for borders
@@ -32,6 +32,9 @@ func toPoint*[N: static[int8]](coord: Coord[N]): Point[N] {.inline.}=
   # TODO, proc/func requires the N as input at the moment.
 
   Point[N] int16(coord.col + 1) * int16(N + 2) + coord.row.int16 + 1
+
+func pos*(coordStr: string, board_size: static[int8]): Point[board_size] =
+  toPoint toCoord(coordStr, board_size)
 
 ################################ Display ###################################
 
