@@ -89,7 +89,8 @@ type
   # Arrays are chosen to minimize cache misses and avoid allocations within Monte-Carlo playouts.
 
   # static[int8] can go beyond high(i8) for some reason
-  # Todo use distinct for proper type-checking
+  # TODO: use distinct for proper type-checking: Pending borrowing for static
+  #        https://github.com/nim-lang/Nim/issues/7552
   GroupsMetaPool*[N: static[int8]] = array[(N.int16 + 2) * (N.int16 + 2), GroupMetadata[N]]
   GroupIDs*[N: static[int8]]       = array[(N.int16 + 2) * (N.int16 + 2), GroupID[N]]
   NextStones*[N: static[int8]]     = array[(N.int16 + 2) * (N.int16 + 2), Point[N]]
@@ -176,16 +177,18 @@ func opponent*(color: Player): Player {.inline.} =
 ################# Strongly checked indexers and iterators ##########################
 
 template genIndexersN(Container, Idx, Value) =
+  # TODO: Will be improved with borrowing for static:
+  #       https://github.com/nim-lang/Nim/issues/7552
   template base_type = array[(N.int16 + 2) * (N.int16 + 2), Value[N]]
 
   func `[]`*[N: static[int8]](container: Container[N], idx: Idx[N]): Value[N] {.inline.} =
-    system.`[]`((base_type)(container), idx.int16)
+    container[idx.int16]
 
   func `[]`*[N: static[int8]](container: var Container[N], idx: Idx[N]): var Value[N] {.inline.} =
-    system.`[]`((base_type)(container), idx.int16)
+    container[idx.int16]
 
   func `[]=`*[N: static[int8]](container: var Container[N], idx: Idx[N], val: Value[N]){.inline.} =
-    system.`[]=`((base_type)(container), idx.int16, val)
+    container[idx.int16]
 
   iterator items*[N: static[int8]](container: Container[N]): Value[N] =
     for mval in (base_type)(container).mitems:
@@ -196,10 +199,12 @@ template genIndexersN(Container, Idx, Value) =
       yield mval
 
 template genIndexers(Container, Idx, Value) =
+  # TODO: Will be improved with borrowing for static:
+  #       https://github.com/nim-lang/Nim/issues/7552
   template base_type = array[(N.int16 + 2) * (N.int16 + 2), Value]
 
   func `[]`*[N: static[int8]](container: Container[N], idx: Idx[N]): Value {.inline.} =
-    system.`[]`((base_type)(container), idx.int16)
+    container[idx.int16]
 
   func `[]`*[N: static[int8]](container: var Container[N], idx: Idx[N]): var Value {.inline.} =
     container[idx.int16]
