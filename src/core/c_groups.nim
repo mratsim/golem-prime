@@ -36,7 +36,7 @@ iterator groupof*[N: static[int8]](g: Groups[N], start_stone: Point[N]): Point[N
 
   var stone = g.next_stones[start_stone]
 
-  if stone == Point[N](-1):
+  if stone != Point[N](-1):
     while stone != start_stone:
       yield stone
       stone = g.next_stones[stone]

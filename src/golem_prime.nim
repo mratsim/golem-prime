@@ -27,11 +27,21 @@ when isMainModule:
   a.play(White, pos("B4", 19'i8))
   echo a.board
 
-  echo a.group_id(pos("A4", 19'i8)).int16
-  echo a.group(pos("A4", 19'i8))
+  echo "\n A4"
+  let A4 = pos("A4", 19'i8)
+  echo a.group_id(A4).int16
+  echo a.group(A4)
+  echo "next A4: " & $a.group_next(A4)
 
-  echo a.group_id(pos("B4", 19'i8)).int16
-  echo a.group(pos("B4", 19'i8))
+  echo "\n B4"
+  let B4 = pos("B4", 19'i8)
+  echo a.group_id(B4).int16
+  echo a.group(B4)
+  echo "next B4: " & $a.group_next(B4)
+
+  echo "\n Group"
+  for stone in groupof(a.groups, A4):
+    echo $stone
 
   echo "\n###### Capturing white ######"
   a.play(Black, pos("A3", 19'i8))
