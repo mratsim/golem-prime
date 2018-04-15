@@ -113,7 +113,8 @@ type
   EmptyPoints*[N: static[int8]] = object
     # data: set_of_points(N) # Broken https://github.com/nim-lang/Nim/issues/7547
     data*: set[-1 .. (19+2)*(19+2) - 1] # Hardcoded as workaround
-    len*: int16 # sets have a card(inality) proc but it is not O(1), it traverse both set and unset values
+    len*: int16     # sets have a card(inality) proc but it is not O(1), it traverse both set and unset values
+    last*: Point[N] # Easily get the last added point for ko checking
 
   BoardState*[N: static[int8]] = object
     ## Dynamic data related to the board

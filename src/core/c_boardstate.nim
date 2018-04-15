@@ -168,3 +168,30 @@ func capture_deads_around(self: var BoardState, color: Player, point: Point) =
   for neighbor in point.neighbors:
     if self.board[neighbor] == color_opponent and group[neighbor].isDead:
       remove_group neighbor
+
+func is_opponent_eye(self: BoardState, color: Player, point: Point): bool =
+  ## Returns true if a stone would be in the opponent eye.
+  result = true
+  let opponent_color = color.opponent
+  for neighbor in point.neighbors:
+    {.unroll: 4.}
+    # No early return, branching is probably not worth it for a bool. TODO: measure
+    let color_neighbor = self.board[neighbor]
+    result = result and color_neighbor in {opponent_color, Border}
+
+func play*(self: BoardState, color: Player, point: Point) =
+  ## Play a stone
+  ## Move is assumed valid. Illegality should be checked beforehand
+
+  let
+    potential_ko = is_opponent_eye(color, point)
+    prev_len_empty_points = self.empty_points.len
+
+  merge_with_groups(color, point)
+  place_stone(color, point)
+  remove_from_neighbors_libs(point)
+  capture_deads_around(color, point)
+
+  self.ko_pos = if potential_ko and prev_len_empty_points == self.empty_points.len:
+                  self.empty_points.last
+                else: -1

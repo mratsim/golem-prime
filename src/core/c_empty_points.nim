@@ -16,6 +16,7 @@ func incl*(x: var EmptyPoints, point: Point) {.inline.} =
   # We assume point is not already in the set to avoid branching when updating the count
 
   x.data.incl point
+  x.last = point # Used for ko checking
   inc x.len
 
 func excl*(x: var EmptyPoints, point: Point) {.inline.} =
