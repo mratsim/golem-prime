@@ -2,7 +2,7 @@
 # Distributed under the Apache v2 License
 # (license terms are at https://www.apache.org/licenses/LICENSE-2.0).
 
-import macros
+import macros, sequtils
 
 ### Hardcoded
 # macro set_of_points*(size: static[int]): untyped =
@@ -33,7 +33,8 @@ type
 
   # We index from 0
   Coord*[N: static[int8]] = tuple[col, row: range[0'i8 .. (N-1)]]
-  Point*[N: static[int8]] = range[-1'i16 .. (N.int16 + 2) * (N.int16 + 2) - 1]  # Easily switch how to index for perf testing: native word size (int) vs cache locality (int16)
+  Point*[N: static[int8]] = distinct range[-1'i16 .. (N.int16 + 2) * (N.int16 + 2) - 1]
+    # Easily switch how to index for perf testing: native word size (int) vs cache locality (int16)
     # -1 is used for ko or group position: nil
     # TODO something more robust
     #  - object variant
@@ -77,7 +78,7 @@ type
     nb_pseudo_libs*: int16
     color*: Intersection # TODO separate to improve alignment, and can be packed
 
-  GroupID*[N: static[int8]] = distinct Point[N]
+  GroupID*[N: static[int8]] = distinct range[0'i16 .. (N.int16 + 2) * (N.int16 + 2) - 1]
     # Alias to prevent directly accessing group metadata
     # without getting the groupID first
 
@@ -161,7 +162,7 @@ const MaxNbMoves* = 512
 ################################ Go common logic ###################################
 
 func neighbors*[N: static[int8]](idx: Point[N]): array[4, Point[N]] {.inline.}=
-  [Point[N] idx - 1, idx + 1, idx - (Point[N] N+2), idx + (Point[N] N+2)]
+  [Point[N] idx.int16 - 1, Point[N] idx.int16 + 1, Point[N] idx.int16 - (N+2), Point[N] idx.int16 + (N+2)]
 
 const opponents: array[Player, Player] = [
   Black: Player White,
@@ -171,6 +172,58 @@ func opponent*(color: Player): Player {.inline.} =
   opponents[color]
 
 ################################ Go common logic ###################################
+
+################# Strongly checked indexers and iterators ##########################
+
+template genIndexersN(Container, Idx, Value) =
+  template base_type = array[(N.int16 + 2) * (N.int16 + 2), Value[N]]
+
+  func `[]`*[N: static[int8]](container: Container[N], idx: Idx[N]): Value[N] {.inline.} =
+    system.`[]`((base_type)(container), idx.int16)
+
+  func `[]`*[N: static[int8]](container: var Container[N], idx: Idx[N]): var Value[N] {.inline.} =
+    system.`[]`((base_type)(container), idx.int16)
+
+  func `[]=`*[N: static[int8]](container: var Container[N], idx: Idx[N], val: Value[N]){.inline.} =
+    system.`[]=`((base_type)(container), idx.int16, val)
+
+  iterator items*[N: static[int8]](container: Container[N]): Value[N] =
+    for mval in (base_type)(container).mitems:
+      yield mval
+
+  iterator mitems*[N: static[int8]](container: var Container[N]): var Value[N] =
+    for mval in (base_type)(container).mitems:
+      yield mval
+
+template genIndexers(Container, Idx, Value) =
+  template base_type = array[(N.int16 + 2) * (N.int16 + 2), Value]
+
+  func `[]`*[N: static[int8]](container: Container[N], idx: Idx[N]): Value {.inline.} =
+    system.`[]`((base_type)(container), idx.int16)
+
+  func `[]`*[N: static[int8]](container: var Container[N], idx: Idx[N]): var Value {.inline.} =
+    container[idx.int16]
+
+  func `[]=`*[N: static[int8]](container: var Container[N], idx: Idx[N], val: Value){.inline.} =
+    container[idx.int16] = val
+
+  iterator items*[N: static[int8]](container: Container[N]): Value =
+    for mval in (base_type)(container).mitems:
+      yield mval
+
+  iterator mitems*[N: static[int8]](container: var Container[N]): var Value =
+    for mval in (base_type)(container).mitems:
+      yield mval
+
+genIndexersN(GroupsMetaPool, GroupID, GroupMetadata)
+genIndexersN(GroupIDs, Point, GroupID)
+genIndexersN(NextStones, Point, Point)
+genIndexers(Board, Point, Intersection)
+
+func `==`*(val1, val2: Point or GroupID): bool = val1.int16 == val2.int16
+
+################# Strongly checked indexers and iterators ##########################
+
 
 when isMainModule:
 

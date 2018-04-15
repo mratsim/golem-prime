@@ -5,7 +5,7 @@
 import ../datatypes
 
 func contains*(x: EmptyPoints, point: Point): bool {.inline.} =
-  x.data.contains(point)
+  x.data.contains(point.int16)
 
 func incl*(x: var EmptyPoints, point: Point) {.inline.} =
   ## Add a Point to a set of EmptyPoints
@@ -15,7 +15,7 @@ func incl*(x: var EmptyPoints, point: Point) {.inline.} =
   assert point notin x, "Error: " & $point & " is already in EmptyPoints"
   # We assume point is not already in the set to avoid branching when updating the count
 
-  x.data.incl point
+  x.data.incl point.int16
   x.last = point # Used for ko checking
   inc x.len
 
@@ -27,5 +27,5 @@ func excl*(x: var EmptyPoints, point: Point) {.inline.} =
   assert point in x, "Error: " & $point & " is not in EmptyPoints"
   # We assume point is in the set to avoid branching when updating the count
 
-  x.data.excl point
+  x.data.excl point.int16
   dec x.len

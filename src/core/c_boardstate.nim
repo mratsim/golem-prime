@@ -10,7 +10,7 @@ func newBoardState*(size: static[int8]): BoardState[size] {.noInit.} =
 
   result.next_player = Black
   result.nb_black_stones = 0
-  result.ko_pos = -1
+  result.ko_pos = Point[size](-1)
   newGroups(result.groups)
 
   for i, mstone in result.board.mpairs:
@@ -23,7 +23,7 @@ func newBoardState*(size: static[int8]): BoardState[size] {.noInit.} =
       result.groups.metadata[GroupID[size] i].reset_border
     else:
       mstone = Empty
-      result.empty_points.incl i.int16
+      result.empty_points.incl Point[size](i)
 
 {.this:self.} # TODO: this does not seem to work with static
 proc place_stone*(self: var BoardState, color: Player, point: Point) {.inline.}=
@@ -180,7 +180,7 @@ func is_opponent_eye(self: BoardState, color: Player, point: Point): bool =
       return false
   return true
 
-func play*(self: var BoardState, color: Player, point: Point) =
+func play*[N: static[int8]](self: var BoardState[N], color: Player, point: Point[N]) =
   ## Play a stone
   ## Move is assumed valid. Illegality should be checked beforehand
 
@@ -195,4 +195,4 @@ func play*(self: var BoardState, color: Player, point: Point) =
 
   self.ko_pos = if potential_ko and prev_len_empty_points == self.empty_points.len:
                   self.empty_points.last
-                else: -1
+                else: Point[N](-1)

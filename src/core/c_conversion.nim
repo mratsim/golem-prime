@@ -31,7 +31,7 @@ func toPoint*[N: static[int8]](coord: Coord[N]): Point[N] {.inline.}=
 
   # TODO, proc/func requires the N as input at the moment.
 
-  int16(coord.col + 1) * int16(N + 2) + coord.row.int16 + 1
+  Point[N] int16(coord.col + 1) * int16(N + 2) + coord.row.int16 + 1
 
 ################################ Display ###################################
 
@@ -43,6 +43,9 @@ const stone_display: array[Intersection, char] = [
 
 func toChar*(intersection: Intersection): char {.inline.}=
   stone_display[intersection]
+
+func `$`*(point: Point): string =
+  $point.int16
 
 func `$`*[N: static[int8]](board: Board[N]): string =
   # Display a go board

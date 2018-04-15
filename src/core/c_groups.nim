@@ -5,39 +5,6 @@
 import
   ../datatypes
 
-######################################################################################
-
-# Type-checked indexer and iterators to avoid mixing and matching
-
-template genIndexers(Container, Idx, Value) =
-  template base_type = array[(N.int16 + 2) * (N.int16 + 2), Value[N]]
-
-  func `[]`*[N: static[int8]](container: Container[N], idx: Idx[N]): Value[N] {.inline.} =
-    system.`[]`((base_type)(container), idx.int16)
-
-  func `[]`*[N: static[int8]](container: var Container[N], idx: Idx[N]): var Value[N] {.inline.} =
-    system.`[]`((base_type)(container), idx.int16)
-
-  func `[]=`*[N: static[int8]](container: var Container[N], idx: Idx[N], val: Value[N]){.inline.} =
-    system.`[]`((base_type)(container), idx.int16, val)
-
-  iterator items*[N: static[int8]](container: Container[N]): Value[N] =
-    for mval in (base_type)(container).mitems:
-      yield mval
-
-  iterator mitems*[N: static[int8]](container: var Container[N]): var Value[N] =
-    for mval in (base_type)(container).mitems:
-      yield mval
-
-
-genIndexers(GroupsMetaPool, GroupID, GroupMetadata)
-genIndexers(GroupIDs, Point, GroupID)
-genIndexers(NextStones, Point, Point)
-
-func `==`*(val1, val2: GroupID): bool = int16(val1) == int16(val2)
-
-######################################################################################
-
 func newGroups*[N: static[int8]](groups: var Groups[N]) =
   new groups
   # for group_id in mitems(groups.id):
@@ -77,13 +44,13 @@ iterator groupof*[N: static[int8]](g: Groups[N], start_stone: Point[N]): Point[N
 func add_as_lib*(self: var GroupMetadata, point: Point) {.inline.} =
   ## Add an adjacent point as a liberty to a group
   inc self.nb_pseudo_libs
-  self.sum_degree_vertices += point
+  self.sum_degree_vertices += point.int16
   self.sum_square_degree_vertices += point.int32 * point.int32
 
 func remove_from_lib*(self: var GroupMetadata, point: Point) {.inline.} =
   ## Remove an adjacent point from a group liberty
   dec self.nb_pseudo_libs
-  self.sum_degree_vertices -= point
+  self.sum_degree_vertices -= point.int16
   self.sum_square_degree_vertices -= point.int32 * point.int32
 
 func merge*(self: var GroupsMetaPool, g1, g2: GroupID) {.inline.}=
