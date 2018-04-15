@@ -4,28 +4,6 @@
 
 import macros, sequtils
 
-### Hardcoded
-# macro set_of_points*(size: static[int]): untyped =
-#   ## Workaround to set raising "ordinal type expected"
-#   ## when used with static[int]: https://github.com/nim-lang/Nim/issues/7546
-
-#   # Returns set[ -1'i16 .. (N+2)^2 - 1]
-
-#   var nodeStartRange = newNimNode(nnkInt16Lit)
-#   nodeStartRange.intVal = -1
-
-#   var nodeEndRange = newNimNode(nnkInt16Lit)
-#   nodeEndRange.intVal = (size+2) * (size+2) - 1
-
-#   result = nnkBracketExpr.newTree(
-#     newIdentNode("set"),
-#     nnkInfix.newTree(
-#       newIdentNode(".."),
-#       nodeStartRange,
-#       nodeEndRange
-#     )
-#   )
-
 # TODO: template or macro for (N.int16 + 2) * (N.int16 + 2)
 
 type
@@ -118,7 +96,8 @@ type
     # TODO requires int and not int8 otherwise `$` doesn't catch it: https://github.com/nim-lang/Nim/issues/7611
 
   EmptyPoints*[N: static[int8]] = object
-    # data: set_of_points(N) # Broken https://github.com/nim-lang/Nim/issues/7547
+    # Broken https://github.com/nim-lang/Nim/issues/7546
+    # And    https://github.com/nim-lang/Nim/issues/7547
     # Hardcoded as workaround (we don't include first and last row to save space)
     # We assume at least a 9x9 board and at most a 19x19 board for the hardcoded values
     data*: set[9 .. (19+2)*(19+1) - 1]
@@ -177,7 +156,6 @@ func opponent*(color: Player): Player {.inline.} =
 template genIndexersN(Container, Idx, Value) =
   # TODO: Will be improved with borrowing for static:
   #       https://github.com/nim-lang/Nim/issues/7552
-  template base_type = array[(N.int16 + 2) * (N.int16 + 2), Value[N]]
 
   func `[]`*[N: static[int8]](container: Container[N], idx: Idx[N]): Value[N] {.inline.} =
     container[idx.int16]
@@ -188,18 +166,9 @@ template genIndexersN(Container, Idx, Value) =
   func `[]=`*[N: static[int8]](container: var Container[N], idx: Idx[N], val: Value[N]){.inline.} =
     container[idx.int16]
 
-  # iterator items*[N: static[int8]](container: Container[N]): Value[N] =
-  #   for mval in (base_type)(container).mitems:
-  #     yield mval
-
-  # iterator mitems*[N: static[int8]](container: var Container[N]): var Value[N] =
-  #   for mval in (base_type)(container).mitems:
-  #     yield mval
-
 template genIndexers(Container, Idx, Value) =
   # TODO: Will be improved with borrowing for static:
   #       https://github.com/nim-lang/Nim/issues/7552
-  template base_type = array[(N.int16 + 2) * (N.int16 + 2), Value]
 
   func `[]`*[N: static[int8]](container: Container[N], idx: Idx[N]): Value {.inline.} =
     container[idx.int16]
@@ -209,14 +178,6 @@ template genIndexers(Container, Idx, Value) =
 
   func `[]=`*[N: static[int8]](container: var Container[N], idx: Idx[N], val: Value){.inline.} =
     container[idx.int16] = val
-
-  # iterator items*[N: static[int8]](container: Container[N]): Value =
-  #   for mval in (base_type)(container).mitems:
-  #     yield mval
-
-  # iterator mitems*[N: static[int8]](container: var Container[N]): var Value =
-  #   for mval in (base_type)(container).mitems:
-  #     yield mval
 
 genIndexers(GroupsMetaPool, GroupID, GroupMetadata)
 genIndexersN(GroupIDs, Point, GroupID)
