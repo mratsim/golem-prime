@@ -26,7 +26,7 @@ func newBoardState*(size: static[int8]): BoardState[size] {.noInit.} =
       mstone = Empty
       result.empty_points.incl Point[size](i)
 
-{.this:self.} # TODO: this does not seem to work with static
+{.this: self.} # TODO: this does not work with static - https://github.com/nim-lang/Nim/issues/7618
 proc place_stone*(self: BoardState, color: Player, point: Point) {.inline.}=
   ## Place a stone at a specified position
   ## This only updates board state metadata
