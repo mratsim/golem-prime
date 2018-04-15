@@ -26,9 +26,9 @@ when isMainModule:
   echo toPoint[19](toCoord("B1", 19))
   echo toPoint[19](toCoord("Q16", 19))
 
-  # echo "\n###### Playing: 19x19 board ######"
-  # a.play(Black, toPoint(toCoord("Q16", 19'i8)))
+  echo "\n###### Playing: 19x19 board ######"
+  a.play(Black, toPoint(toCoord("Q16", 19'i8)))
   # a.play(White, toPoint(toCoord("A4", 19'i8)))
   # a.play(Black, toPoint(toCoord("Q4", 19'i8)))
 
-  # echo a.board
+  echo a.board

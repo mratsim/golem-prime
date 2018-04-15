@@ -10,33 +10,31 @@ import
 # Type-checked indexer and iterators to avoid mixing and matching
 
 template genIndexers(Container, Idx, Value) =
+  template base_type = array[(N.int16 + 2) * (N.int16 + 2), Value[N]]
+
   func `[]`*[N: static[int8]](container: Container[N], idx: Idx[N]): Value[N] {.inline.} =
-    (array[(N.int16 + 2) * (N.int16 + 2), Value[N]])(container)[Point[N](idx)]
+    system.`[]`((base_type)(container), idx.int16)
 
   func `[]`*[N: static[int8]](container: var Container[N], idx: Idx[N]): var Value[N] {.inline.} =
-    (array[(N.int16 + 2) * (N.int16 + 2), Value[N]])(container)[Point[N](idx)]
+    system.`[]`((base_type)(container), idx.int16)
 
   func `[]=`*[N: static[int8]](container: var Container[N], idx: Idx[N], val: Value[N]){.inline.} =
-    (array[(N.int16 + 2) * (N.int16 + 2), Value[N]])(container)[Point[N](idx)] = val
+    system.`[]`((base_type)(container), idx.int16, val)
 
-template genIterators(Container, Idx, Value) =
   iterator items*[N: static[int8]](container: Container[N]): Value[N] =
-    for mval in (array[(N + 2) * (N + 2), Value[N]])(container).mitems:
+    for mval in (base_type)(container).mitems:
       yield mval
 
   iterator mitems*[N: static[int8]](container: var Container[N]): var Value[N] =
-    for mval in (array[(N + 2) * (N + 2), Value[N]])(container).mitems:
+    for mval in (base_type)(container).mitems:
       yield mval
 
 
 genIndexers(GroupsMetaPool, GroupID, GroupMetadata)
 genIndexers(GroupIDs, Point, GroupID)
-genIndexers(NextStones, NextStone, NextStone)
-genIndexers(NextStones, Point, NextStone)
+genIndexers(NextStones, Point, Point)
 
-genIterators(GroupsMetaPool, GroupID, GroupMetadata)
-genIterators(GroupIDs, Point, GroupID)
-genIterators(NextStones, NextStone, NextStone)
+func `==`*(val1, val2: GroupID): bool = int16(val1) == int16(val2)
 
 ######################################################################################
 
@@ -68,27 +66,27 @@ iterator groupof*[N: static[int8]](g: Groups[N], start_stone: Point[N]): Point[N
   ## Iterates over the all the stones of the same group as the input
 
   yield start_stone
-  if g.next_stones == -1:
-    break
 
   var stone = g.next_stones[start_stone]
-  while stone != start_stone:
-    yield stone
-    stone = g.next_stones[stone]
+
+  if stone == Point[N](-1):
+    while stone != start_stone:
+      yield stone
+      stone = g.next_stones[stone]
 
 func add_as_lib*(self: var GroupMetadata, point: Point) {.inline.} =
   ## Add an adjacent point as a liberty to a group
   inc self.nb_pseudo_libs
   self.sum_degree_vertices += point
-  self.sum_square_degree_vertices += point.i32 * point.i32
+  self.sum_square_degree_vertices += point.int32 * point.int32
 
-func remove_from_lib(self: var GroupMetadata, point: Point) {.inline.} =
+func remove_from_lib*(self: var GroupMetadata, point: Point) {.inline.} =
   ## Remove an adjacent point from a group liberty
   dec self.nb_pseudo_libs
   self.sum_degree_vertices -= point
-  self.sum_square_degree_vertices -= point.i32 * point.i32
+  self.sum_square_degree_vertices -= point.int32 * point.int32
 
-func merge(self: var GroupsMetaPool, g1, g2: GroupID) {.inline.}=
+func merge*(self: var GroupsMetaPool, g1, g2: GroupID) {.inline.}=
   ## Merge the metadata of the groups of 2 stones
   ## This does not clear leftover metadata
   assert g1 != g2
@@ -99,7 +97,7 @@ func merge(self: var GroupsMetaPool, g1, g2: GroupID) {.inline.}=
   self[g1].nb_stones                  += self[g2].nb_stones
   self[g1].nb_pseudo_libs             += self[g2].nb_pseudo_libs
 
-func concat(self: var NextStones, p1, p2: Point) {.inline.}=
+func concat*(self: var NextStones, p1, p2: Point) {.inline.}=
   ## Concatenate the lists of stones in the groups of p1 and p2
   swap(self[p1], self[p2])
 

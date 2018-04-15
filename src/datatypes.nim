@@ -77,8 +77,9 @@ type
     nb_pseudo_libs*: int16
     color*: Intersection # TODO separate to improve alignment, and can be packed
 
-  GroupID*[N: static[int8]] = distinct Point[N]   # Aliases to make sure we don't use the wrong Point/index
-  NextStone*[N: static[int8]] = distinct Point[N] # in the wrong places unintentionally
+  GroupID*[N: static[int8]] = distinct Point[N]
+    # Alias to prevent directly accessing group metadata
+    # without getting the groupID first
 
   # GroupsMetaPool and GroupIDs form a disjoint sets with union by rank and path compression.
   # GroupsMetaPool is a memory pool and use as needed. TODO: find the upper bound on the number of groups.
@@ -90,7 +91,7 @@ type
   # Todo use distinct for proper type-checking
   GroupsMetaPool*[N: static[int8]] = array[(N.int16 + 2) * (N.int16 + 2), GroupMetadata[N]]
   GroupIDs*[N: static[int8]]       = array[(N.int16 + 2) * (N.int16 + 2), GroupID[N]]
-  NextStones*[N: static[int8]]     = array[(N.int16 + 2) * (N.int16 + 2), NextStone[N]]
+  NextStones*[N: static[int8]]     = array[(N.int16 + 2) * (N.int16 + 2), Point[N]]
 
   Groups*[N: static[int8]] = ref object
     ## Groups Common Fate Graph. Represented as an array-based disjoint-set.
