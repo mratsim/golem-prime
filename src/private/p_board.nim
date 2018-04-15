@@ -2,9 +2,9 @@
 # Distributed under the Apache v2 License
 # (license terms are at https://www.apache.org/licenses/LICENSE-2.0).
 
-import  tables,
-        ./p_empty_points, ./p_groups, ./p_pointcoord.nim,
-        ../datatypes
+import
+  ./p_colorplayerstone, ./p_empty_points, ./p_groups, ./p_pointcoord.nim,
+  ../datatypes
 
 func newBoardState*(size: static[int8]): BoardState[size] {.noInit.} =
 
@@ -33,16 +33,10 @@ func `$`*[N: static[int]](board: Board[N]): string =
 
   # TODO requires int and not int8 otherwise `$` doesn't catch it: https://github.com/nim-lang/Nim/issues/7611
 
-  const stone_display = {
-    Empty: '.',
-    Black: 'X',
-    White: 'O',
-    Border: ' '}.toTable
-
   result = ""
 
   for i, stone in board:
-    result.add stone_display[stone]
+    result.add stone.toChar
     if i mod (N+2) == N+1: # Test if we reach end of line
       result.add '\n'
 

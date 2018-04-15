@@ -31,5 +31,5 @@ func toPoint*[N: static[int8]](coord: Coord[N]): Point[N] =
 
   int16(coord.col + 1) * int16(N + 2) + coord.row.int16 + 1
 
-proc neighbors*[N: static[int8]](idx: Point[N]): array[4, Point[N]] {.inline.}=
+func neighbors*[N: static[int8]](idx: Point[N]): array[4, Point[N]] {.inline.}=
   [idx-1, idx+1, idx - (N+2), idx + (N+2)]
