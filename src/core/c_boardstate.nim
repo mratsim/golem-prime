@@ -7,11 +7,12 @@ import
   ../datatypes
 
 func newBoardState*(size: static[int8]): BoardState[size] {.noInit.} =
+  new result
 
   result.next_player = Black
   result.nb_black_stones = 0
   result.ko_pos = Point[size](-1)
-  newGroups(result.groups)
+  initGroups(result.groups)
 
   for i, mstone in result.board.mpairs:
     # Set borders
@@ -52,7 +53,6 @@ proc remove_stone*(self: var BoardState, point: Point) {.inline.}=
 
   self.board[point] = Empty
 
-
 ########## Board operations on groups ##########
 # Those operations are done at the board level to avoid double indirection
 # when checking the color of the neighboring stones,
@@ -61,7 +61,7 @@ proc remove_stone*(self: var BoardState, point: Point) {.inline.}=
 func group_id*[N: static[int8]](self: var BoardState[N], point: Point[N]): var GroupID[N] {.inline.}=
   self.groups.id[point]
 
-func group*[N: static[int8]](self: var BoardState[N], point: Point[N]): var GroupMetadata[N] {.inline.}=
+func group*(self: var BoardState, point: Point): var GroupMetadata {.inline.}=
   self.groups.metadata[self.groups.id[point]]
 
 func group_next*[N: static[int8]](self: BoardState[N], point: Point[N]): Point[N] {.inline.}=
@@ -118,12 +118,13 @@ func merge_with_groups*(self: var BoardState, color: Player, point: Point) =
 
   for neighbor in point.neighbors:
     {.unroll: 4.}
-    let neighbor_stones = self.group(neighbor).nb_stones
-    if self.board[neighbor] == color and neighbor_stones > max_nb_stones:
-      # Note, contrary to union-by-rank, we don't special case when both groups have the same
-      # number of stones as we apply path compression right away
-      max_nb_stones = neighbor_stones
-      max_neighbor  = neighbor
+    if self.board[neighbor] == color:
+      let neighbor_stones = self.group(neighbor).nb_stones
+      if neighbor_stones > max_nb_stones:
+        # Note, contrary to union-by-rank, we don't special case when both groups have the same
+        # number of stones as we apply path compression right away
+        max_nb_stones = neighbor_stones
+        max_neighbor  = neighbor
 
   # If there is no friendly group, create a singleton group and return
   if max_nb_stones == 0:

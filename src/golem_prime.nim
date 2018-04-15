@@ -14,9 +14,17 @@ when isMainModule:
   var a = newBoardState(19'i8)
   #echo repr a
 
-  echo "Size of Board + State: " & $sizeof(a)
-  echo "Size of Board: " & $sizeof(a.board)
-  echo "Size of next player: " & $sizeof(a.next_player)
+
+  echo "\nSize of BoardState on the stack: " & $sizeof(a)
+  var total_size: int
+  echo "BoardState field sizes"
+  for name, value in a[].fieldPairs:
+    echo "Size of " & $name & ": " & $sizeof(value)
+    total_size += sizeof(value)
+  echo "total fields size (alignment padding ignored): " & $total_size
+  echo "total cache lines: " & $(total_size.float / 64.0f)
+
+  echo "\nMisc sizes"
   echo "Size of Move: " & $sizeof(Move[19])
   echo "Size of Intersection: " & $sizeof(Intersection)
 

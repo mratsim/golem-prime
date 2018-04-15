@@ -5,12 +5,11 @@
 import
   ../datatypes
 
-func newGroups*[N: static[int8]](groups: var Groups[N]) =
-  new groups
-  # for group_id in mitems(groups.id):
-  #   group_id = GroupID[N](-1)
-  # for next_stone in groups.next_stones.mitems:
-  #   next_stone = NextStone[N](-1)
+func initGroups*[N: static[int8]](groups: var Groups[N]) =
+  for idx, group_id in mpairs(groups.id):
+    group_id = GroupID[N](idx)
+  for next_stone in groups.next_stones.mitems:
+    next_stone = Point[N](-1)
 
 {.this:self.}
 func reset*(self: var GroupMetadata) {.inline.} =

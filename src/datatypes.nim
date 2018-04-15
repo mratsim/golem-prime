@@ -69,7 +69,7 @@ type
 
   ################################ Groups  ###################################
 
-  GroupMetadata*[N: static[int8]] = object
+  GroupMetadata* = object
     # Graph theory
     sum_square_degree_vertices*: int32
     sum_degree_vertices*: int16
@@ -91,11 +91,11 @@ type
   # static[int8] can go beyond high(i8) for some reason
   # TODO: use distinct for proper type-checking: Pending borrowing for static
   #        https://github.com/nim-lang/Nim/issues/7552
-  GroupsMetaPool*[N: static[int8]] = array[(N.int16 + 2) * (N.int16 + 2), GroupMetadata[N]]
+  GroupsMetaPool*[N: static[int8]] = array[(N.int16 + 2) * (N.int16 + 2), GroupMetadata]
   GroupIDs*[N: static[int8]]       = array[(N.int16 + 2) * (N.int16 + 2), GroupID[N]]
   NextStones*[N: static[int8]]     = array[(N.int16 + 2) * (N.int16 + 2), Point[N]]
 
-  Groups*[N: static[int8]] = ref object
+  Groups*[N: static[int8]] = object
     ## Groups Common Fate Graph. Represented as an array-based disjoint-set.
     ##
     # Groups is allocated on the heap as it is quite large (>2MB) and
@@ -119,27 +119,25 @@ type
 
   EmptyPoints*[N: static[int8]] = object
     # data: set_of_points(N) # Broken https://github.com/nim-lang/Nim/issues/7547
-    data*: set[-1 .. (19+2)*(19+2) - 1] # Hardcoded as workaround
+    # Hardcoded as workaround (we don't include first and last row to save space)
+    # We assume at least a 9x9 board and at most a 19x19 board for the hardcoded values
+    data*: set[9 .. (19+2)*(19+1) - 1]
     len*: int16     # sets have a card(inality) proc but it is not O(1), it traverse both set and unset values
     last*: Point[N] # Easily get the last added point for ko checking
 
-  BoardState*[N: static[int8]] = object
+  BoardState*[N: static[int8]] = ref object
     ## Dynamic data related to the board
     # Only store what is essential for board evaluation as
     # trees of board state are generated thousands of time per second
     # during Monte-Carlo Tree Search.
-    #
-    # Size 450 Bytes - fits in 7.01 cache lines :/ (64B per cache lines - 7*64B = 448B)
-    board*: Board[N]
-    next_player*: Player
 
-    # With black stones and empty positions we can recompute white score
-    nb_black_stones*: int16        # Depending on the ruleset we might need to track captures instead
-    empty_points*: EmptyPoints[N]  # Keep track of empty intersections
-
-    ko_pos*: Point[N]              # Last ko position
+    # Order must be from biggest field to smallest to optimize space used/alignment
     groups*: Groups[N]             # Track the groups on board
-
+    board*: Board[N]
+    empty_points*: EmptyPoints[N]  # Keep track of empty intersections
+    nb_black_stones*: int16        # With black stones and empty positions we can recompute white score
+    ko_pos*: Point[N]              # Last ko position
+    next_player*: Player
 
   GameState*[N: static[int8]] = object
     ## Metadata related to the game. Everything that is not copied
@@ -190,13 +188,13 @@ template genIndexersN(Container, Idx, Value) =
   func `[]=`*[N: static[int8]](container: var Container[N], idx: Idx[N], val: Value[N]){.inline.} =
     container[idx.int16]
 
-  iterator items*[N: static[int8]](container: Container[N]): Value[N] =
-    for mval in (base_type)(container).mitems:
-      yield mval
+  # iterator items*[N: static[int8]](container: Container[N]): Value[N] =
+  #   for mval in (base_type)(container).mitems:
+  #     yield mval
 
-  iterator mitems*[N: static[int8]](container: var Container[N]): var Value[N] =
-    for mval in (base_type)(container).mitems:
-      yield mval
+  # iterator mitems*[N: static[int8]](container: var Container[N]): var Value[N] =
+  #   for mval in (base_type)(container).mitems:
+  #     yield mval
 
 template genIndexers(Container, Idx, Value) =
   # TODO: Will be improved with borrowing for static:
@@ -212,15 +210,15 @@ template genIndexers(Container, Idx, Value) =
   func `[]=`*[N: static[int8]](container: var Container[N], idx: Idx[N], val: Value){.inline.} =
     container[idx.int16] = val
 
-  iterator items*[N: static[int8]](container: Container[N]): Value =
-    for mval in (base_type)(container).mitems:
-      yield mval
+  # iterator items*[N: static[int8]](container: Container[N]): Value =
+  #   for mval in (base_type)(container).mitems:
+  #     yield mval
 
-  iterator mitems*[N: static[int8]](container: var Container[N]): var Value =
-    for mval in (base_type)(container).mitems:
-      yield mval
+  # iterator mitems*[N: static[int8]](container: var Container[N]): var Value =
+  #   for mval in (base_type)(container).mitems:
+  #     yield mval
 
-genIndexersN(GroupsMetaPool, GroupID, GroupMetadata)
+genIndexers(GroupsMetaPool, GroupID, GroupMetadata)
 genIndexersN(GroupIDs, Point, GroupID)
 genIndexersN(NextStones, Point, Point)
 genIndexers(Board, Point, Intersection)
