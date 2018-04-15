@@ -4,14 +4,14 @@
 
 import
   ./datatypes,
-  ./core/[c_boardstate, c_conversion]
+  ./core/[c_boardstate, c_conversion, c_groups]
 
 when isMainModule:
   echo "\n###### 9x9 board ######"
-  echo $newBoardState(9)
+  echo $newBoardState(9'i8).board
 
   echo "\n###### 19x19 board ######"
-  var a = newBoardState(19)
+  var a = newBoardState(19'i8)
   #echo repr a
 
   echo "Size of Board + State: " & $sizeof(a)
@@ -25,3 +25,10 @@ when isMainModule:
   echo toPoint[19](toCoord("A1", 19))
   echo toPoint[19](toCoord("B1", 19))
   echo toPoint[19](toCoord("Q16", 19))
+
+  # echo "\n###### Playing: 19x19 board ######"
+  # a.play(Black, toPoint(toCoord("Q16", 19'i8)))
+  # a.play(White, toPoint(toCoord("A4", 19'i8)))
+  # a.play(Black, toPoint(toCoord("Q4", 19'i8)))
+
+  # echo a.board

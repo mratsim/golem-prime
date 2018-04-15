@@ -11,7 +11,7 @@ func newBoardState*(size: static[int8]): BoardState[size] {.noInit.} =
   result.next_player = Black
   result.nb_black_stones = 0
   result.ko_pos = -1
-  newGroups[size](result.groups)
+  newGroups(result.groups)
 
   for i, mstone in result.board.mpairs:
     # Set borders
@@ -20,7 +20,7 @@ func newBoardState*(size: static[int8]): BoardState[size] {.noInit.} =
         i mod (size+2) == 0 or    # first column
         i mod (size+2) == size+1: # last column
       mstone = Border
-      result.groups.metadata[i].reset_border
+      result.groups.metadata[GroupID[size] i].reset_border
     else:
       mstone = Empty
       result.empty_points.incl i.int16
@@ -116,7 +116,7 @@ func merge_with_groups*(self: var BoardState, color: Player, point: Point) =
 
   for neighbor in point.neighbors:
     {.unroll: 4.}
-    let neighbor_stones = group[neighbor].nb_stones
+    let neighbor_stones = self.group(neighbor).nb_stones
     if self.board[neighbor] == color and neighbor_stones > max_nb_stones:
       # Note, contrary to union-by-rank, we don't special case when both groups have the same
       # number of stones as we apply path compression right away
@@ -172,22 +172,23 @@ func capture_deads_around(self: var BoardState, color: Player, point: Point) =
 func is_opponent_eye(self: BoardState, color: Player, point: Point): bool =
   ## Returns true if a stone would be in the opponent eye.
   result = true
-  let opponent_color = color.opponent
+  let
+    opp_or_border = {color.opponent.Intersection, Border}
   for neighbor in point.neighbors:
     {.unroll: 4.}
     # No early return, branching is probably not worth it for a bool. TODO: measure
     let color_neighbor = self.board[neighbor]
-    result = result and color_neighbor in {opponent_color, Border}
+    result = result and color_neighbor in opp_or_border
 
-func play*(self: BoardState, color: Player, point: Point) =
+func play*(self: var BoardState, color: Player, point: Point) =
   ## Play a stone
   ## Move is assumed valid. Illegality should be checked beforehand
 
   let
-    potential_ko = is_opponent_eye(color, point)
+    potential_ko = self.is_opponent_eye(color, point)
     prev_len_empty_points = self.empty_points.len
 
-  merge_with_groups(color, point)
+  self.merge_with_groups(color, point)
   place_stone(color, point)
   remove_from_neighbors_libs(point)
   capture_deads_around(color, point)

@@ -26,8 +26,9 @@ import macros
 #     )
 #   )
 
-type
+# TODO: template or macro for (N.int16 + 2) * (N.int16 + 2)
 
+type
   ################################ Coordinates ###################################
 
   # We index from 0
@@ -67,7 +68,7 @@ type
 
   ################################ Groups  ###################################
 
-  GroupMetadata* = object
+  GroupMetadata*[N: static[int8]] = object
     # Graph theory
     sum_square_degree_vertices*: int32
     sum_degree_vertices*: int16
@@ -84,9 +85,12 @@ type
   # Groups IDs is an array of "pointers" to the location of the group metadata in the pool.
   # NextStones allow efficient iteration as an array-backed LinkedRing (circular linkedlist).
   # Arrays are chosen to minimize cache misses and avoid allocations within Monte-Carlo playouts.
-  GroupsMetaPool*[N: static[int8]] = array[(N + 2) * (N + 2), GroupMetadata]
-  GroupIDs*[N: static[int8]] = array[(N + 2) * (N + 2), GroupID[N]]
-  NextStones*[N: static[int8]] = array[(N + 2) * (N + 2), NextStone[N]]
+
+  # static[int8] can go beyond high(i8) for some reason
+  # Todo use distinct for proper type-checking
+  GroupsMetaPool*[N: static[int8]] = array[(N.int16 + 2) * (N.int16 + 2), GroupMetadata[N]]
+  GroupIDs*[N: static[int8]]       = array[(N.int16 + 2) * (N.int16 + 2), GroupID[N]]
+  NextStones*[N: static[int8]]     = array[(N.int16 + 2) * (N.int16 + 2), NextStone[N]]
 
   Groups*[N: static[int8]] = ref object
     ## Groups Common Fate Graph. Represented as an array-based disjoint-set.
@@ -156,7 +160,7 @@ const MaxNbMoves* = 512
 ################################ Go common logic ###################################
 
 func neighbors*[N: static[int8]](idx: Point[N]): array[4, Point[N]] {.inline.}=
-  [idx-1, idx+1, idx - (N+2), idx + (N+2)]
+  [Point[N] idx - 1, idx + 1, idx - (Point[N] N+2), idx + (Point[N] N+2)]
 
 const opponents: array[Player, Player] = [
   Black: Player White,

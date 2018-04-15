@@ -44,7 +44,7 @@ const stone_display: array[Intersection, char] = [
 func toChar*(intersection: Intersection): char {.inline.}=
   stone_display[intersection]
 
-func `$`*[N: static[int]](board: Board[N]): string =
+func `$`*[N: static[int8]](board: Board[N]): string =
   # Display a go board
 
   # The go board as an extra border on the top, left, right and bottom

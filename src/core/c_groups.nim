@@ -3,30 +3,66 @@
 # (license terms are at https://www.apache.org/licenses/LICENSE-2.0).
 
 import
-  algorithm,
   ../datatypes
+
+######################################################################################
+
+# Type-checked indexer and iterators to avoid mixing and matching
+
+template genIndexers(Container, Idx, Value) =
+  func `[]`*[N: static[int8]](container: Container[N], idx: Idx[N]): Value[N] {.inline.} =
+    (array[(N.int16 + 2) * (N.int16 + 2), Value[N]])(container)[Point[N](idx)]
+
+  func `[]`*[N: static[int8]](container: var Container[N], idx: Idx[N]): var Value[N] {.inline.} =
+    (array[(N.int16 + 2) * (N.int16 + 2), Value[N]])(container)[Point[N](idx)]
+
+  func `[]=`*[N: static[int8]](container: var Container[N], idx: Idx[N], val: Value[N]){.inline.} =
+    (array[(N.int16 + 2) * (N.int16 + 2), Value[N]])(container)[Point[N](idx)] = val
+
+template genIterators(Container, Idx, Value) =
+  iterator items*[N: static[int8]](container: Container[N]): Value[N] =
+    for mval in (array[(N + 2) * (N + 2), Value[N]])(container).mitems:
+      yield mval
+
+  iterator mitems*[N: static[int8]](container: var Container[N]): var Value[N] =
+    for mval in (array[(N + 2) * (N + 2), Value[N]])(container).mitems:
+      yield mval
+
+
+genIndexers(GroupsMetaPool, GroupID, GroupMetadata)
+genIndexers(GroupIDs, Point, GroupID)
+genIndexers(NextStones, NextStone, NextStone)
+genIndexers(NextStones, Point, NextStone)
+
+genIterators(GroupsMetaPool, GroupID, GroupMetadata)
+genIterators(GroupIDs, Point, GroupID)
+genIterators(NextStones, NextStone, NextStone)
+
+######################################################################################
 
 func newGroups*[N: static[int8]](groups: var Groups[N]) =
   new groups
-  groups.id.fill GroupID[N](-1)
-  groups.next_stones.fill NextStone[N](-1)
+  # for group_id in mitems(groups.id):
+  #   group_id = GroupID[N](-1)
+  # for next_stone in groups.next_stones.mitems:
+  #   next_stone = NextStone[N](-1)
 
 {.this:self.}
 func reset*(self: var GroupMetadata) {.inline.} =
-  sum_square_degree_vertices = 0
-  sum_degree_vertices = 0
-  nb_stones = 0
-  nb_pseudo_libs = 0
-  color = Empty
+  self.sum_square_degree_vertices = 0
+  self.sum_degree_vertices = 0
+  self.nb_stones = 0
+  self.nb_pseudo_libs = 0
+  self.color = Empty
 
 func reset_border*(self: var GroupMetadata) {.inline.} =
   ## Special values for the border stones. They have infinite liberties
   ## and should never be in atari
-  sum_square_degree_vertices = high(int32)
-  sum_degree_vertices = high(int16)
-  nb_pseudo_libs = high(int16)
-  nb_stones = 0
-  color = Border
+  self.sum_square_degree_vertices = high(int32)
+  self.sum_degree_vertices = high(int16)
+  self.nb_pseudo_libs = high(int16)
+  self.nb_stones = 0
+  self.color = Border
 
 iterator groupof*[N: static[int8]](g: Groups[N], start_stone: Point[N]): Point[N] =
   ## Iterates over the all the stones of the same group as the input
@@ -42,15 +78,15 @@ iterator groupof*[N: static[int8]](g: Groups[N], start_stone: Point[N]): Point[N
 
 func add_as_lib*(self: var GroupMetadata, point: Point) {.inline.} =
   ## Add an adjacent point as a liberty to a group
-  inc nb_pseudo_libs
-  sum_degree_vertices += point
-  sum_square_degree_vertices += point.i32 * point.i32
+  inc self.nb_pseudo_libs
+  self.sum_degree_vertices += point
+  self.sum_square_degree_vertices += point.i32 * point.i32
 
 func remove_from_lib(self: var GroupMetadata, point: Point) {.inline.} =
   ## Remove an adjacent point from a group liberty
-  dec nb_pseudo_libs
-  sum_degree_vertices -= point
-  sum_square_degree_vertices -= point.i32 * point.i32
+  dec self.nb_pseudo_libs
+  self.sum_degree_vertices -= point
+  self.sum_square_degree_vertices -= point.i32 * point.i32
 
 func merge(self: var GroupsMetaPool, g1, g2: GroupID) {.inline.}=
   ## Merge the metadata of the groups of 2 stones
