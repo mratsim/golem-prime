@@ -27,7 +27,7 @@ func newBoardState*(size: static[int8]): BoardState[size] {.noInit.} =
       result.empty_points.incl Point[size](i)
 
 {.this:self.} # TODO: this does not seem to work with static
-proc place_stone*(self: var BoardState, color: Player, point: Point) {.inline.}=
+proc place_stone*(self: BoardState, color: Player, point: Point) {.inline.}=
   ## Place a stone at a specified position
   ## This only updates board state metadata
   ## And does not trigger groups/stones related life & death computation
@@ -40,7 +40,7 @@ proc place_stone*(self: var BoardState, color: Player, point: Point) {.inline.}=
 
   self.board[point] = color
 
-proc remove_stone*(self: var BoardState, point: Point) {.inline.}=
+proc remove_stone*(self: BoardState, point: Point) {.inline.}=
   ## Remove a stone at a specified position
   ## This only updates board state metadata
   ## And does not trigger groups/stones related life & death computation
@@ -58,32 +58,29 @@ proc remove_stone*(self: var BoardState, point: Point) {.inline.}=
 # when checking the color of the neighboring stones,
 # it would require metadata[id[point]] otherwise
 
-func group_id*[N: static[int8]](self: var BoardState[N], point: Point[N]): var GroupID[N] {.inline.}=
+func group_id*[N: static[int8]](self: BoardState[N], point: Point[N]): var GroupID[N] {.inline.}=
   self.groups.id[point]
 
-func group*(self: var BoardState, point: Point): var GroupMetadata {.inline.}=
+func group*(self: BoardState, point: Point): var GroupMetadata {.inline.}=
   self.groups.metadata[self.groups.id[point]]
 
-func group_next*[N: static[int8]](self: BoardState[N], point: Point[N]): Point[N] {.inline.}=
+func group_next*[N: static[int8]](self: BoardState[N], point: Point[N]): var Point[N] {.inline.}=
   self.groups.next_stones[point]
 
-func group_next*[N: static[int8]](self: var BoardState[N], point: Point[N]): var Point[N] {.inline.}=
-  self.groups.next_stones[point]
-
-func add_neighboring_libs(self: var BoardState, point: Point) =
+func add_neighboring_libs(self: BoardState, point: Point) =
   ## Update groups metadata with liberties adjacent from a point
   for neighbor in point.neighbors:
     {.unroll: 4.}
     if self.board[neighbor] == Empty:
       self.group(point).add_as_lib neighbor
 
-func remove_from_neighbors_libs(self: var BoardState, point: Point) =
+func remove_from_neighbors_libs(self: BoardState, point: Point) =
   ## Remove a point from neighboring groups liberties
   for neighbor in point.neighbors:
     {.unroll: 4.}
     self.group(neighbor).remove_from_lib point
 
-func singleton[N: static[int8]](self: var BoardState[N], color: Player, point: Point[N]) =
+func singleton[N: static[int8]](self: BoardState[N], color: Player, point: Point[N]) =
   ## Create a new group from a single stone
 
   self.group_id(point) = GroupID[N](point)
@@ -95,7 +92,7 @@ func singleton[N: static[int8]](self: var BoardState[N], color: Player, point: P
 
   self.add_neighboring_libs point
 
-func add_to_group(self: var BoardState, point, group_repr: Point) =
+func add_to_group(self: BoardState, point, group_repr: Point) =
   ## Add a point to the same group as a representative
 
   self.group_id(point) = self.group_id(group_repr)
@@ -107,7 +104,7 @@ func add_to_group(self: var BoardState, point, group_repr: Point) =
 
   self.add_neighboring_libs point
 
-func merge_with_groups*(self: var BoardState, color: Player, point: Point) =
+func merge_with_groups*(self: BoardState, color: Player, point: Point) =
   ## Merge a new stone with surrounding stones of the same color.
   ## Create a new group if it is standalone
 
@@ -151,7 +148,7 @@ func merge_with_groups*(self: var BoardState, color: Player, point: Point) =
   # Now add the new stone to the adjacent group or merged group
   self.add_to_group(point, max_neighbor)
 
-func remove_group(self: var BoardState, point: Point) =
+func remove_group(self: BoardState, point: Point) =
   ## Remove the group input point is part of
   # This does not clear leftover metadata
 
@@ -164,7 +161,7 @@ func remove_group(self: var BoardState, point: Point) =
       # We don't want an "if" branch in a tight for loop
       self.group(neighbor).add_as_lib stone
 
-func capture_deads_around(self: var BoardState, color: Player, point: Point) =
+func capture_deads_around(self: BoardState, color: Player, point: Point) =
   ## Capture dead group around a stone
 
   let color_opponent = color.opponent
@@ -181,7 +178,7 @@ func is_opponent_eye(self: BoardState, color: Player, point: Point): bool =
       return false
   return true
 
-func play*[N: static[int8]](self: var BoardState[N], color: Player, point: Point[N]) =
+func play*[N: static[int8]](self: BoardState[N], color: Player, point: Point[N]) =
   ## Play a stone
   ## Move is assumed valid. Illegality should be checked beforehand
 
