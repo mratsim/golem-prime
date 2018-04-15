@@ -142,3 +142,12 @@ func remove_group(self: var BoardState, point: Point) =
       # We don't care if we update the liberties of the group the deleted stone is part of
       # We don't want an "if" branch in a tight for loop
       group(neighbor).add_as_lib stone
+
+func capture_deads_around(self: var BoardState, color: Player, point: Point) =
+  ## Capture dead group around a stone
+
+  let color_opponent = color.opponent
+  for neighbor in point.neighbors:
+    if self.board[neighbor] == color_opponent and group[neighbor].isDead:
+      remove_group neighbor
+
