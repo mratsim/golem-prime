@@ -3,8 +3,27 @@
 # (license terms are at https://www.apache.org/licenses/LICENSE-2.0).
 
 import
-  ./private/[p_empty_points, p_groups],
-  ./datatypes
+  ./c_empty_points, ./c_groups,
+  ../datatypes
+
+func newBoardState*(size: static[int8]): BoardState[size] {.noInit.} =
+
+  result.next_player = Black
+  result.nb_black_stones = 0
+  result.ko_pos = -1
+  newGroups[size](result.groups)
+
+  for i, mstone in result.board.mpairs:
+    # Set borders
+    if  i < size+2 or             # first row
+        i >= (size+1)*(size+2) or # last row
+        i mod (size+2) == 0 or    # first column
+        i mod (size+2) == size+1: # last column
+      mstone = Border
+      result.groups.metadata[i].reset_border
+    else:
+      mstone = Empty
+      result.empty_points.incl i.int16
 
 {.this:self.}
 proc place_stone*(self: var BoardState, color: Player, point: Point) {.inline.}=
@@ -88,7 +107,6 @@ func add_to_group(self: var BoardState, point, group_repr: Point) =
 
   add_neighboring_libs point
 
-
 func merge_with_groups*(self: var BoardState, color: Player, point: Point) =
   ## Merge a new stone with surrounding stones of the same color.
   ## Create a new group if it is standalone
@@ -150,4 +168,3 @@ func capture_deads_around(self: var BoardState, color: Player, point: Point) =
   for neighbor in point.neighbors:
     if self.board[neighbor] == color_opponent and group[neighbor].isDead:
       remove_group neighbor
-

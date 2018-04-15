@@ -4,7 +4,6 @@
 
 import
   algorithm,
-  ./p_pointcoord,
   ../datatypes
 
 func newGroups*[N: static[int8]](groups: var Groups[N]) =

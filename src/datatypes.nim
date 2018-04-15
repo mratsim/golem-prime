@@ -152,6 +152,20 @@ const MaxNbMoves* = 512
 
 ################################ Constants  ###################################
 
+################################ Go common logic ###################################
+
+func neighbors*[N: static[int8]](idx: Point[N]): array[4, Point[N]] {.inline.}=
+  [idx-1, idx+1, idx - (N+2), idx + (N+2)]
+
+const opponents: array[Player, Player] = [
+  Black: Player White,
+  White: Player Black]
+
+func opponent*(color: Player): Player {.inline.} =
+  opponents[color]
+
+################################ Go common logic ###################################
+
 when isMainModule:
 
   var a: EmptyPoints[19]
