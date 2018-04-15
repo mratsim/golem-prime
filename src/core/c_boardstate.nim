@@ -173,14 +173,12 @@ func capture_deads_around(self: var BoardState, color: Player, point: Point) =
 
 func is_opponent_eye(self: BoardState, color: Player, point: Point): bool =
   ## Returns true if a stone would be in the opponent eye.
-  result = true
-  let
-    opp_or_border = {color.opponent.Intersection, Border}
   for neighbor in point.neighbors:
     {.unroll: 4.}
-    # No early return, branching is probably not worth it for a bool. TODO: measure
     let color_neighbor = self.board[neighbor]
-    result = result and color_neighbor in opp_or_border
+    if color_neighbor in {Intersection color, Empty}:
+      return false
+  return true
 
 func play*(self: var BoardState, color: Player, point: Point) =
   ## Play a stone
