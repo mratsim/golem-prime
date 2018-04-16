@@ -4,6 +4,7 @@
 
 import
   ../datatypes
+
 {.this:self.}
 func reset*[N: static[int8]](groups: var Groups[N]) =
   for idx, group_id in mpairs(groups.id):
@@ -16,7 +17,8 @@ func reset*(self: var GroupMetadata) {.inline.} =
   sum_degree_vertices = 0
   nb_stones = 0
   nb_pseudo_libs = 0
-  color = Empty
+  when compileOption("boundChecks"):
+    color = Empty
 
 func reset_border*(self: var GroupMetadata) {.inline.} =
   ## Special values for the border stones. They have infinite liberties
@@ -25,7 +27,8 @@ func reset_border*(self: var GroupMetadata) {.inline.} =
   sum_degree_vertices = high(uint16)
   nb_pseudo_libs = 4
   nb_stones = 0
-  color = Border
+  when compileOption("boundChecks"):
+    color = Border
 
 iterator groupof*[N: static[int8]](g: Groups[N], start_stone: Point[N]): Point[N] =
   ## Iterates over the all the stones of the same group as the input

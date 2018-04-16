@@ -54,7 +54,8 @@ type
     # Go Metadata (nb_stones acts as "rank" for disjoint sets "union by rank" optimization)
     nb_stones*: int16
     nb_pseudo_libs*: uint16
-    color*: Intersection # TODO separate to improve alignment, and can be packed
+    when compileOption("boundChecks"):
+      color*: Intersection # This is debug only
 
   GroupID*[N: static[int8]] = distinct range[0'i16 .. (N.int16 + 2) * (N.int16 + 2) - 1]
     # Alias to prevent directly accessing group metadata

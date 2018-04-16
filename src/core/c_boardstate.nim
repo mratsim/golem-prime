@@ -46,7 +46,8 @@ func singleton[N: static[int8]](self: BoardState[N], color: range[Empty..White],
   self.group_next(point) = point
 
   self.group(point).reset()
-  self.group(point).color = color
+  when compileOption("boundChecks"):
+    self.group(point).color = color
   inc self.group(point).nb_stones
 
   self.add_neighboring_libs point
