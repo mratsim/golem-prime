@@ -46,7 +46,7 @@ func singleton[N: static[int8]](self: BoardState[N], color: range[Empty..White],
   self.group_next(point) = point
 
   self.group(point).reset()
-  when compileOption("boundChecks"):
+  debug_only:
     self.group(point).color = color
   inc self.group(point).nb_stones
 
@@ -68,7 +68,8 @@ func newBoardState*(size: static[int8]): BoardState[size] =
         i mod (size+2) == size+1: # last column
       mstone = Border
       result.groups.metadata[GroupID[size] i].reset_border
-      result.empty_points.reset_border Point[size](i)
+      debug_only:
+        result.empty_points.reset_border Point[size](i)
     else:
       mstone = Empty
       result.empty_points.reset_empty Point[size](i)

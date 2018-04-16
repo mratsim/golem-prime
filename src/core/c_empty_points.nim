@@ -4,13 +4,15 @@
 
 import ../datatypes
 
-func contains(s: EmptyPoints, point: Point): bool {.inline.} =
-  assert point.int16 != -1
-  s.indices[point.int16] != -1
+debug_only:
+  func contains(s: EmptyPoints, point: Point): bool {.inline.} =
+    assert point.int16 != -1
+    s.indices[point.int16] != -1
 
-func reset_border*(s: var EmptyPoints, point: Point) {.inline.} =
-  ## Add a point to the border
-  s.indices[point.int16] = -1
+debug_only:
+  func reset_border*(s: var EmptyPoints, point: Point) {.inline.} =
+    ## Add a point to the border
+    s.indices[point.int16] = -1
 
 func reset_empty*(s: var EmptyPoints, point: Point) {.inline.} =
   ## Add a point to the empty list without pre-checks
@@ -31,7 +33,8 @@ func incl*[N: static[int8]](s: var EmptyPoints[N], point: Point[N]) {.inline.} =
   ## an error in debug mode otherwise
 
   # We assume point is not already in the set to avoid branching when updating the count
-  assert point notin s, "Error: " & $point & " is already in EmptyPoints"
+  debug_only:
+    assert point notin s, "Error: " & $point & " is already in EmptyPoints"
   # Bound checking
   assert s.len <= N.int16 * N.int16, "EmptyPoints is already at max capacity."
 
@@ -45,7 +48,8 @@ func excl*(s: var EmptyPoints, point: Point) {.inline.} =
   ## an error in debug mode otherwise
 
   # We assume point is in the set to avoid branching when updating the count
-  assert point in s, "Error: " & $point & " is not in EmptyPoints"
+  debug_only:
+    assert point in s, "Error: " & $point & " is not in EmptyPoints"
 
   # We do constant time deletion by replacing the deleted point
   # by the last value in the list
@@ -53,6 +57,7 @@ func excl*(s: var EmptyPoints, point: Point) {.inline.} =
   let del_idx = s.indices[point.int16]
 
   s.indices[s.peek.int16] = del_idx   # Last value now points to deleted index
-  s.indices[point.int16] = -1         # Now we erase last value (take care of border case when we reove last value)
+  debug_only:
+    s.indices[point.int16] = -1       # Now we erase last value (take care of border case when we reove last value)
   dec s.len
   s.list[del_idx] = s.list[s.len]     # Deleted item is now last value

@@ -2,7 +2,11 @@
 # Distributed under the Apache v2 License
 # (license terms are at https://www.apache.org/licenses/LICENSE-2.0).
 
-import macros, sequtils
+import
+  macros, sequtils,
+  debug
+
+export debug
 
 # TODO: template or macro for (N.int16 + 2) * (N.int16 + 2)
 

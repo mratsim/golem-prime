@@ -17,7 +17,7 @@ func reset*(self: var GroupMetadata) {.inline.} =
   sum_degree_vertices = 0
   nb_stones = 0
   nb_pseudo_libs = 0
-  when compileOption("boundChecks"):
+  debug_only:
     color = Empty
 
 func reset_border*(self: var GroupMetadata) {.inline.} =
@@ -27,7 +27,7 @@ func reset_border*(self: var GroupMetadata) {.inline.} =
   sum_degree_vertices = high(uint16)
   nb_pseudo_libs = 4
   nb_stones = 0
-  when compileOption("boundChecks"):
+  debug_only:
     color = Border
 
 iterator groupof*[N: static[int8]](g: Groups[N], start_stone: Point[N]): Point[N] =
@@ -58,7 +58,8 @@ func merge*(self: var GroupsMetaPool, g1, g2: GroupID) {.inline.}=
   ## Merge the metadata of the groups of 2 stones
   ## This does not clear leftover metadata
   assert g1 != g2
-  assert self[g1].color == self[g2].color
+  debug_only:
+    assert self[g1].color == self[g2].color
 
   self[g1].sum_square_degree_vertices += self[g2].sum_square_degree_vertices
   self[g1].sum_degree_vertices        += self[g2].sum_degree_vertices
