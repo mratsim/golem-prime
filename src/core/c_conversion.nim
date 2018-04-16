@@ -50,7 +50,7 @@ const stone_display: array[Intersection, char] = [
   White: 'O',
   Border: ' ']
 
-func toChar*(intersection: Intersection): char {.inline.}=
+func toChar(intersection: Intersection): char {.inline.}=
   stone_display[intersection]
 
 func `$`*[N: static[int8]](point: Point[N]): string {.inline.}=

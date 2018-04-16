@@ -23,7 +23,7 @@ func reset_border*(self: var GroupMetadata) {.inline.} =
   ## and should never be in atari
   sum_square_degree_vertices = high(int32)
   sum_degree_vertices = high(int16)
-  nb_pseudo_libs = high(int16)
+  nb_pseudo_libs = 4
   nb_stones = 0
   color = Border
 

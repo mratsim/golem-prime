@@ -6,28 +6,10 @@ import
   ./c_empty_points, ./c_groups,
   ../datatypes
 
-func newBoardState*(size: static[int8]): BoardState[size] {.noInit.} =
-  new result
-
-  result.next_player = Black
-  result.nb_black_stones = 0
-  result.ko_pos = Point[size](-1)
-  reset(result.groups)
-
-  for i, mstone in result.board.mpairs:
-    # Set borders
-    if  i < size+2 or             # first row
-        i >= (size+1)*(size+2) or # last row
-        i mod (size+2) == 0 or    # first column
-        i mod (size+2) == size+1: # last column
-      mstone = Border
-      result.groups.metadata[GroupID[size] i].reset_border
-      result.empty_points.reset_border Point[size](i)
-    else:
-      mstone = Empty
-      result.empty_points.reset_empty Point[size](i)
-
 {.this: self.} # TODO: this does not work with static - https://github.com/nim-lang/Nim/issues/7618
+
+########## Board operations on stones ##########
+
 proc place_stone*(self: BoardState, color: Player, point: Point) {.inline.}=
   ## Place a stone at a specified position
   ## This only updates board state metadata
@@ -42,7 +24,7 @@ proc place_stone*(self: BoardState, color: Player, point: Point) {.inline.}=
 
   self.board[point] = color
 
-proc remove_stone*(self: BoardState, point: Point) {.inline.}=
+proc remove_stone(self: BoardState, point: Point) {.inline.}=
   ## Remove a stone at a specified position
   ## This only updates board state metadata
   ## And does not trigger groups/stones related life & death computation
@@ -55,18 +37,27 @@ proc remove_stone*(self: BoardState, point: Point) {.inline.}=
 
   self.board[point] = Empty
 
+func is_opponent_eye*(self: BoardState, color: Player, point: Point): bool =
+  ## Returns true if a stone would be in the opponent eye.
+  for neighbor in point.neighbors:
+    {.unroll: 4.}
+    let color_neighbor = self.board[neighbor]
+    if color_neighbor in {Intersection color, Empty}:
+      return false
+  return true
+
 ########## Board operations on groups ##########
 # Those operations are done at the board level to avoid double indirection
 # when checking the color of the neighboring stones,
 # it would require metadata[id[point]] otherwise
 
-func group_id*[N: static[int8]](self: BoardState[N], point: Point[N]): var GroupID[N] {.inline.}=
+func group_id[N: static[int8]](self: BoardState[N], point: Point[N]): var GroupID[N] {.inline.}=
   self.groups.id[point]
 
-func group*(self: BoardState, point: Point): var GroupMetadata {.inline.}=
+func group(self: BoardState, point: Point): var GroupMetadata {.inline.}=
   self.groups.metadata[self.groups.id[point]]
 
-func group_next*[N: static[int8]](self: BoardState[N], point: Point[N]): var Point[N] {.inline.}=
+func group_next[N: static[int8]](self: BoardState[N], point: Point[N]): var Point[N] {.inline.}=
   self.groups.next_stones[point]
 
 func add_neighboring_libs(self: BoardState, point: Point) =
@@ -76,7 +67,7 @@ func add_neighboring_libs(self: BoardState, point: Point) =
     if self.board[neighbor] == Empty:
       self.group(point).add_as_lib neighbor
 
-func remove_from_neighbors_libs(self: BoardState, point: Point) =
+func remove_from_neighbors_libs*(self: BoardState, point: Point) =
   ## Remove a point from neighboring groups liberties
   for neighbor in point.neighbors:
     {.unroll: 4.}
@@ -164,7 +155,7 @@ func remove_group(self: BoardState, point: Point) =
       # We don't want an "if" branch in a tight for loop
       self.group(neighbor).add_as_lib stone
 
-func capture_deads_around(self: BoardState, color: Player, point: Point) =
+func capture_deads_around*(self: BoardState, color: Player, point: Point) =
   ## Capture dead group around a stone
 
   let color_opponent = color.opponent
@@ -172,28 +163,31 @@ func capture_deads_around(self: BoardState, color: Player, point: Point) =
     if self.board[neighbor] == color_opponent and self.group(neighbor).isDead:
       self.remove_group neighbor
 
-func is_opponent_eye(self: BoardState, color: Player, point: Point): bool =
-  ## Returns true if a stone would be in the opponent eye.
-  for neighbor in point.neighbors:
-    {.unroll: 4.}
-    let color_neighbor = self.board[neighbor]
-    if color_neighbor in {Intersection color, Empty}:
-      return false
-  return true
+########## Initialization ##########
 
-func play*[N: static[int8]](self: BoardState[N], color: Player, point: Point[N]) =
-  ## Play a stone
-  ## Move is assumed valid. Illegality should be checked beforehand
+func newBoardState*(size: static[int8]): BoardState[size] =
+  new result
 
-  let
-    potential_ko = self.is_opponent_eye(color, point)
-    prev_len_empty_points = self.empty_points.len
+  result.next_player = Black
+  result.nb_black_stones = 0
+  result.ko_pos = Point[size](-1)
+  reset(result.groups)
 
-  self.merge_with_groups(color, point)
-  self.place_stone(color, point)
-  self.remove_from_neighbors_libs(point)
-  self.capture_deads_around(color, point)
+  for i, mstone in result.board.mpairs:
+    # Set borders
+    if  i < size+2 or             # first row
+        i >= (size+1)*(size+2) or # last row
+        i mod (size+2) == 0 or    # first column
+        i mod (size+2) == size+1: # last column
+      mstone = Border
+      result.groups.metadata[GroupID[size] i].reset_border
+      result.empty_points.reset_border Point[size](i)
+    else:
+      mstone = Empty
+      result.empty_points.reset_empty Point[size](i)
 
-  self.ko_pos = if potential_ko and prev_len_empty_points == self.empty_points.len:
-                  self.empty_points.peek
-                else: Point[N](-1)
+  # To ease testing if a move is legal, even empty positions
+  # have liberties.
+  for idx, stone in result.board:
+    if stone == Empty:
+      result.add_neighboring_libs Point[size](idx)

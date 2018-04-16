@@ -2,9 +2,9 @@
 # Distributed under the Apache v2 License
 # (license terms are at https://www.apache.org/licenses/LICENSE-2.0).
 
-import ../datatypes, random
+import ../datatypes
 
-func contains*(s: EmptyPoints, point: Point): bool {.inline.} =
+func contains(s: EmptyPoints, point: Point): bool {.inline.} =
   assert point.int16 != -1
   s.indices[point.int16] != -1
 
@@ -56,17 +56,3 @@ func excl*(s: var EmptyPoints, point: Point) {.inline.} =
   s.indices[s.peek.int16] = del_idx   # Last value now points to deleted index
   dec s.len
   s.list[del_idx] = s.list[s.len]     # Deleted item is now last value
-
-# Random seed setting for reproducibility
-# You can pass your own with:
-const random_seed {.intdefine.} = 0
-when random_seed == 0:
-  randomize()
-else:
-  randomize random_seed
-
-proc rand*[N: static[int8]](s: EmptyPoints[N]): Point[N] {.inline.}=
-  ## Generate a random move from a set of empty points
-  ## Nim random uses Xoroshiro128+ PRNG which is very fast
-  ## and produces high quality random numbers
-  s.list[rand(0'i16 .. s.len-1)]
