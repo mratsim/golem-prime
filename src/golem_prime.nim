@@ -32,7 +32,7 @@ when isMainModule:
     echo "Player: " & $a.next_player
 
     let move = a.random_move
-    if move == Point[N](-1) or count == N * N + 10:
+    if move == Point[N](-1):
       echo "No legal move left!"
       break
 

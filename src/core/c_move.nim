@@ -40,11 +40,13 @@ func play*[N: static[int8]](self: BoardState[N], point: Point[N], color: Player)
 func play*[N: static[int8]](self: BoardState[N], point: Point[N]) {.inline.}=
   self.play point, self.next_player
 
-func is_legalish_move(self: BoardState, point: Point, color: Player): bool =
+func is_legalish_move[N: static[int8]](self: BoardState[N], point: Point[N], color: Player): bool =
   ## Check if a move looks legal
   ## This does not check for superko for efficiency reason.
   ## They are very rare and we can just take the second best move
   ## if it comes to that.
+
+  assert point != Point[N](-1), "-1 is is not a real board position."
 
   assert self.board[point] == Empty, $point & " is already occupied by a " & $self.board[point] &
     " stone. This shouldn't happen."
@@ -92,7 +94,6 @@ proc random_move*[N: static[int8]](self: BoardState[N], color: Player): Point[N]
 
   while true:
     result = self.empty_points.list[candidate_idx]
-    debugecho "\nCandidate: " & $result
     if self.is_legalish_move(result, color):
       return
     inc candidate_idx

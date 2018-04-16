@@ -102,7 +102,6 @@ proc remove_stone(self: BoardState, point: Point) {.inline.}=
   ## And does not trigger groups/stones related life & death computation
 
   assert self.board[point] notin {Empty, Border}
-  debugecho "removing: " & $point
 
   self.empty_points.incl point
   if self.board[point] == Black:
