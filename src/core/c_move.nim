@@ -24,28 +24,14 @@ func play*[N: static[int8]](self: BoardState[N], point: Point[N], color: Player)
   ## Play a stone
   ## Move is assumed valid. Illegality should be checked beforehand
 
-  template debug(title: string) =
-    debugecho title & $point
-    for neighbor in point.neighbors:
-      debugecho "Neighbor: " & (if self.board[neighbor] == Border: $Border else: $neighbor) &
-                ", Liberties: " & $self.group(neighbor).nb_pseudo_libs
-
   let
     potential_ko = self.is_opponent_eye(color, point)
     prev_len_empty_points = self.empty_points.len
 
   self.merge_with_groups           color, point
   self.place_stone                 color, point
-  debugonly:
-    debugecho "-----------------------"
-    debug     "\n Before play at:"
-
   self.remove_from_neighbors_libs         point
-  debugonly:
-    debug "\n After play at: "
   self.capture_deads_around        color, point
-  debugonly:
-    debug "\n After play & capture at: "
 
   self.ko_pos = if potential_ko and prev_len_empty_points == self.empty_points.len:
                   self.empty_points.peek
@@ -71,8 +57,6 @@ func is_legalish_move[N: static[int8]](self: BoardState[N], point: Point[N], col
   # We track liberties even for empty points to detect eyes without actually playing
   # A play is "always" valid if there are liberties. (Besides superko)
   if self.group(point).nb_pseudo_libs > 0:
-    debugecho "Pseudo-lib > 0"
-    debugecho self.group(point)
     return true
 
   # Now we deal with spaces with no apparent liberties
@@ -89,8 +73,6 @@ func is_legalish_move[N: static[int8]](self: BoardState[N], point: Point[N], col
 
     # We track liberties of empty spaces.
     let neighbor_in_atari = self.group(neighbor).is_in_atari
-    # debugecho "Neighbor: " & (if self.board[neighbor] == Border: $Border else: $neighbor)
-    # debugecho "Neighbor in atari: " & $neighbor_in_atari
 
     # 1. False eye in atari from opponent
     # 2. Dame: we connect to a friendly group with a liberty elsewhere
@@ -112,11 +94,9 @@ proc random_move*[N: static[int8]](self: BoardState[N], color: Player): Point[N]
 
   while true:
     result = self.empty_points.list[candidate_idx]
-    debugecho "\nCandidate: " & $result
     if self.is_legalish_move(result, color):
-      debugecho "Valid"
       return
-    # debugecho "Invalid"
+
     inc candidate_idx
     if candidate_idx == self.empty_points.len:
       # Roll-over if we reach max length

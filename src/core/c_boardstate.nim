@@ -110,10 +110,6 @@ proc remove_stone(self: BoardState, point: Point) {.inline.}=
   self.board[point] = Empty
   self.singleton Empty, point
 
-  debugecho "Removed: " & $point &
-            ", group_id: " & $self.group_id(point).int16 &
-            ", group: " & $self.group(point)
-
 func is_opponent_eye*(self: BoardState, color: Player, point: Point): bool =
   ## Returns true if a stone would be in the opponent eye.
   for neighbor in point.neighbors:

@@ -59,7 +59,7 @@ type
     nb_stones*: range[0'i16 .. high(int16)]
     nb_pseudo_libs*: range[0'i16 .. high(int16)]
     when compileOption("boundChecks"):
-      color*: Intersection # This is debug only
+      color*: Intersection
 
   GroupID*[N: static[int8]] = distinct range[0'i16 .. (N.int16 + 2) * (N.int16 + 2) - 1]
     # Alias to prevent directly accessing group metadata
