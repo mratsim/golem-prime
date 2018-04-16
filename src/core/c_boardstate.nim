@@ -8,6 +8,76 @@ import
 
 {.this: self.} # TODO: this does not work with static - https://github.com/nim-lang/Nim/issues/7618
 
+########## Iteration and group accessors ##########
+# Those operations are done at the board level to avoid double indirection
+# when checking the color of the neighboring stones.
+
+func group_id[N: static[int8]](self: BoardState[N], point: Point[N]): var GroupID[N] {.inline.}=
+  self.groups.id[point]
+
+func group*(self: BoardState, point: Point): var GroupMetadata {.inline.}=
+  self.groups.metadata[self.groups.id[point]]
+
+func group_next[N: static[int8]](self: BoardState[N], point: Point[N]): var Point[N] {.inline.}=
+  self.groups.next_stones[point]
+
+########## Group liberties ##########
+
+func add_neighboring_libs(self: BoardState, point: Point) =
+  ## Update groups metadata with liberties adjacent from a point
+  for neighbor in point.neighbors:
+    {.unroll: 4.}
+    if self.board[neighbor] == Empty:
+      self.group(point).add_as_lib neighbor
+
+func remove_from_neighbors_libs*(self: BoardState, point: Point) =
+  ## Remove a point from neighboring groups liberties
+  for neighbor in point.neighbors:
+    {.unroll: 4.}
+    self.group(neighbor).remove_from_lib point
+
+########## Initialization ##########
+
+func singleton[N: static[int8]](self: BoardState[N], color: range[Empty..White], point: Point[N]) =
+  ## Create a new group from a single stone
+  ## Empty intersections also form a singleton group
+
+  self.group_id(point) = GroupID[N](point)
+  self.group_next(point) = point
+
+  self.group(point).reset()
+  self.group(point).color = color
+  inc self.group(point).nb_stones
+
+  self.add_neighboring_libs point
+
+func newBoardState*(size: static[int8]): BoardState[size] =
+  new result
+
+  result.next_player = Black
+  result.nb_black_stones = 0
+  result.ko_pos = Point[size](-1)
+  reset(result.groups)
+
+  for i, mstone in result.board.mpairs:
+    # Set borders
+    if  i < size+2 or             # first row
+        i >= (size+1)*(size+2) or # last row
+        i mod (size+2) == 0 or    # first column
+        i mod (size+2) == size+1: # last column
+      mstone = Border
+      result.groups.metadata[GroupID[size] i].reset_border
+      result.empty_points.reset_border Point[size](i)
+    else:
+      mstone = Empty
+      result.empty_points.reset_empty Point[size](i)
+
+  # To ease testing if a move is legal, even empty positions
+  # have liberties.
+  for idx, stone in result.board:
+    if stone == Empty:
+      result.add_neighboring_libs Point[size](idx)
+
 ########## Board operations on stones ##########
 
 proc place_stone*(self: BoardState, color: Player, point: Point) {.inline.}=
@@ -37,6 +107,7 @@ proc remove_stone(self: BoardState, point: Point) {.inline.}=
     dec self.nb_black_stones
 
   self.board[point] = Empty
+  self.singleton Empty, point
 
 func is_opponent_eye*(self: BoardState, color: Player, point: Point): bool =
   ## Returns true if a stone would be in the opponent eye.
@@ -47,44 +118,7 @@ func is_opponent_eye*(self: BoardState, color: Player, point: Point): bool =
       return false
   return true
 
-########## Board operations on groups ##########
-# Those operations are done at the board level to avoid double indirection
-# when checking the color of the neighboring stones,
-# it would require metadata[id[point]] otherwise
-
-func group_id[N: static[int8]](self: BoardState[N], point: Point[N]): var GroupID[N] {.inline.}=
-  self.groups.id[point]
-
-func group*(self: BoardState, point: Point): var GroupMetadata {.inline.}=
-  self.groups.metadata[self.groups.id[point]]
-
-func group_next[N: static[int8]](self: BoardState[N], point: Point[N]): var Point[N] {.inline.}=
-  self.groups.next_stones[point]
-
-func add_neighboring_libs(self: BoardState, point: Point) =
-  ## Update groups metadata with liberties adjacent from a point
-  for neighbor in point.neighbors:
-    {.unroll: 4.}
-    if self.board[neighbor] == Empty:
-      self.group(point).add_as_lib neighbor
-
-func remove_from_neighbors_libs*(self: BoardState, point: Point) =
-  ## Remove a point from neighboring groups liberties
-  for neighbor in point.neighbors:
-    {.unroll: 4.}
-    self.group(neighbor).remove_from_lib point
-
-func singleton[N: static[int8]](self: BoardState[N], color: Player, point: Point[N]) =
-  ## Create a new group from a single stone
-
-  self.group_id(point) = GroupID[N](point)
-  self.group_next(point) = point
-
-  self.group(point).reset()
-  self.group(point).color = color
-  inc self.group(point).nb_stones
-
-  self.add_neighboring_libs point
+########## Merging/killing dragons ##########
 
 func add_to_group(self: BoardState, point, group_repr: Point) =
   ## Add a point to the same group as a representative
@@ -163,32 +197,3 @@ func capture_deads_around*(self: BoardState, color: Player, point: Point) =
   for neighbor in point.neighbors:
     if self.board[neighbor] == color_opponent and self.group(neighbor).isDead:
       self.remove_group neighbor
-
-########## Initialization ##########
-
-func newBoardState*(size: static[int8]): BoardState[size] =
-  new result
-
-  result.next_player = Black
-  result.nb_black_stones = 0
-  result.ko_pos = Point[size](-1)
-  reset(result.groups)
-
-  for i, mstone in result.board.mpairs:
-    # Set borders
-    if  i < size+2 or             # first row
-        i >= (size+1)*(size+2) or # last row
-        i mod (size+2) == 0 or    # first column
-        i mod (size+2) == size+1: # last column
-      mstone = Border
-      result.groups.metadata[GroupID[size] i].reset_border
-      result.empty_points.reset_border Point[size](i)
-    else:
-      mstone = Empty
-      result.empty_points.reset_empty Point[size](i)
-
-  # To ease testing if a move is legal, even empty positions
-  # have liberties.
-  for idx, stone in result.board:
-    if stone == Empty:
-      result.add_neighboring_libs Point[size](idx)

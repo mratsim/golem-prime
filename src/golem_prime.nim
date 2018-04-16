@@ -32,12 +32,13 @@ when isMainModule:
     echo "Player: " & $a.next_player
 
     let move = a.random_move
+    if move == Point[N](-1) or count == N * N + 10:
+      echo "No legal move left!"
+      break
+
     echo "Next move: " & $move
     echo "Empty set: " & $a.empty_points
     echo "Empty set len: " & $a.empty_points.len
-
-    if move == Point[N](-1) or count == N * N + 10:
-      break
 
     a.play(move)
     a.next_player = a.next_player.opponent
