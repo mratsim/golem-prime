@@ -48,12 +48,12 @@ type
   ################################ Groups  ###################################
 
   GroupMetadata* = object
-    # Graph theory
-    sum_square_degree_vertices*: int32
-    sum_degree_vertices*: int16
+    # Graph theory. We use uint because we want the rollover on overflow.
+    sum_square_degree_vertices*: uint32
+    sum_degree_vertices*: uint16
     # Go Metadata (nb_stones acts as "rank" for disjoint sets "union by rank" optimization)
     nb_stones*: int16
-    nb_pseudo_libs*: int16
+    nb_pseudo_libs*: uint16
     color*: Intersection # TODO separate to improve alignment, and can be packed
 
   GroupID*[N: static[int8]] = distinct range[0'i16 .. (N.int16 + 2) * (N.int16 + 2) - 1]
@@ -95,6 +95,8 @@ type
 
     # TODO requires int and not int8 otherwise `$` doesn't catch it: https://github.com/nim-lang/Nim/issues/7611
 
+  EmptyIdx*[N: static[int8]] = range[-1'i16 .. N.int16 * N.int16]
+
   EmptyPoints*[N: static[int8]] = object
     # We need a set/hashset with the following properties:
     #  - Can store up to ~500 elements at most (covered by `set` and `Hashset`)
@@ -106,7 +108,7 @@ type
     # Implementation
     # - An array of indices that maps input -> -1 if not present in set or its index in an array of value present (allows incl/excl)
     # - An (array of values + length) present in the set (allows fast random pick).
-    indices*: array[(N.int16 + 2) * (N.int16 + 2), range[-1'i16 .. N.int16 * N.int16]]
+    indices*: array[(N.int16 + 2) * (N.int16 + 2), EmptyIdx[N]]
     list*: array[N.int16 * N.int16, Point[N]]
     len*: int16
 

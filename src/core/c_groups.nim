@@ -21,8 +21,8 @@ func reset*(self: var GroupMetadata) {.inline.} =
 func reset_border*(self: var GroupMetadata) {.inline.} =
   ## Special values for the border stones. They have infinite liberties
   ## and should never be in atari
-  sum_square_degree_vertices = high(int32)
-  sum_degree_vertices = high(int16)
+  sum_square_degree_vertices = high(uint32)
+  sum_degree_vertices = high(uint16)
   nb_pseudo_libs = 4
   nb_stones = 0
   color = Border
@@ -42,14 +42,14 @@ iterator groupof*[N: static[int8]](g: Groups[N], start_stone: Point[N]): Point[N
 func add_as_lib*(self: var GroupMetadata, point: Point) {.inline.} =
   ## Add an adjacent point as a liberty to a group
   inc self.nb_pseudo_libs
-  self.sum_degree_vertices += point.int16
-  self.sum_square_degree_vertices += point.int32 * point.int32
+  self.sum_degree_vertices += point.uint16
+  self.sum_square_degree_vertices += point.uint32 * point.uint32
 
 func remove_from_lib*(self: var GroupMetadata, point: Point) {.inline.} =
   ## Remove an adjacent point from a group liberty
   dec self.nb_pseudo_libs
-  self.sum_degree_vertices -= point.int16
-  self.sum_square_degree_vertices -= point.int32 * point.int32
+  self.sum_degree_vertices -= point.uint16
+  self.sum_square_degree_vertices -= point.uint32 * point.uint32
 
 func merge*(self: var GroupsMetaPool, g1, g2: GroupID) {.inline.}=
   ## Merge the metadata of the groups of 2 stones
@@ -66,5 +66,9 @@ func concat*(self: var NextStones, p1, p2: Point) {.inline.}=
   ## Concatenate the lists of stones in the groups of p1 and p2
   swap(self[p1], self[p2])
 
-func isDead*(self: GroupMetadata): bool {.inline.}=
+func is_dead*(self: GroupMetadata): bool {.inline.}=
   nb_pseudo_libs == 0
+
+func is_in_atari*(self: GroupMetadata): bool {.inline.}=
+  debugecho self
+  nb_pseudo_libs.uint32 * sum_square_degree_vertices == sum_degree_vertices * sum_degree_vertices
