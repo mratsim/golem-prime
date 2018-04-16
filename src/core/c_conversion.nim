@@ -70,12 +70,15 @@ func `$`*[N: static[int8]](board: Board[N]): string =
 
   # TODO requires int and not int8 otherwise `$` doesn't catch it: https://github.com/nim-lang/Nim/issues/7611
 
-  result = ""
+  result = "  " & Cols[0..N] & '\n'
 
   for i, stone in board:
     result.add stone.toChar
     if i mod (N+2) == N+1: # Test if we reach end of line
       result.add '\n'
+      let row = N - i div (N+2)
+      if row in 1..N:
+        result.add &" {row}"
 
 func `$`*(s: EmptyPoints): string =
 
