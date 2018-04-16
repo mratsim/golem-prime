@@ -30,6 +30,7 @@ proc remove_stone(self: BoardState, point: Point) {.inline.}=
   ## And does not trigger groups/stones related life & death computation
 
   assert self.board[point] notin {Empty, Border}
+  debugecho "removing: " & $point
 
   self.empty_points.incl point
   if self.board[point] == Black:
@@ -54,7 +55,7 @@ func is_opponent_eye*(self: BoardState, color: Player, point: Point): bool =
 func group_id[N: static[int8]](self: BoardState[N], point: Point[N]): var GroupID[N] {.inline.}=
   self.groups.id[point]
 
-func group(self: BoardState, point: Point): var GroupMetadata {.inline.}=
+func group*(self: BoardState, point: Point): var GroupMetadata {.inline.}=
   self.groups.metadata[self.groups.id[point]]
 
 func group_next[N: static[int8]](self: BoardState[N], point: Point[N]): var Point[N] {.inline.}=
