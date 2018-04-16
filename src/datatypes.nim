@@ -56,8 +56,8 @@ type
     sum_square_degree_vertices*: uint32
     sum_degree_vertices*: uint16
     # Go Metadata (nb_stones acts as "rank" for disjoint sets "union by rank" optimization)
-    nb_stones*: int16
-    nb_pseudo_libs*: uint16
+    nb_stones*: range[0'i16 .. high(int16)]
+    nb_pseudo_libs*: range[0'i16 .. high(int16)]
     when compileOption("boundChecks"):
       color*: Intersection # This is debug only
 

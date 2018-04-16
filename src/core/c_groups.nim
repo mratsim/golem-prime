@@ -74,4 +74,4 @@ func is_dead*(self: GroupMetadata): bool {.inline.}=
   nb_pseudo_libs == 0
 
 func is_in_atari*(self: GroupMetadata): bool {.inline.}=
-  nb_pseudo_libs.uint32 * sum_square_degree_vertices == sum_degree_vertices * sum_degree_vertices
+  nb_pseudo_libs.uint32 * sum_square_degree_vertices == sum_degree_vertices.uint32 * sum_degree_vertices.uint32

@@ -15,7 +15,7 @@ when isMainModule:
   doAssert $pos("D4", 19'i8) == "D4"
 
 when isMainModule:
-  const N: int8 = 19
+  const N: int8 = 9
   echo "\n###### board ######"
   var a = newBoardState(N)
   echo a.board
