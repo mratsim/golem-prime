@@ -52,7 +52,7 @@ func excl*(s: var EmptyPoints, point: Point) {.inline.} =
 
   let del_idx = s.indices[point.int16]
 
-  s.indices[point.int16] = -1
   s.indices[s.peek.int16] = del_idx   # Last value now points to deleted index
+  s.indices[point.int16] = -1         # Now we erase last value (take care of border case when we reove last value)
   dec s.len
   s.list[del_idx] = s.list[s.len]     # Deleted item is now last value
