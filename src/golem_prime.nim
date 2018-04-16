@@ -10,8 +10,10 @@ import
 #       Compile it with -d:random_seed=1234 to set the random seed to 1234
 
 when isMainModule:
+  doAssert $pos("D4", 19'i8) == "D4"
+
   echo "\n###### 9x9 board ######"
-  var a = newBoardState(19'i8)
+  var a = newBoardState(9'i8)
 
   # echo "\n###### 19x19 board ######"
   # var a = newBoardState(19'i8)

@@ -18,10 +18,11 @@ func toCoord(coordStr: string, N: static[int8]): Coord[N] =
   #   - square board
   #   - input of length 2 or 3 like A1 and Q16
   #   - input in uppercase
+  #   - We use convention A1 is at the bottom right
   assert coordStr.len <= 3
 
   result.col = Cols.find(coordStr[0]) - 1
-  result.row = coordStr[1 .. coordStr.high].parseInt - 1
+  result.row = N - coordStr[1 .. coordStr.high].parseInt
 
 func toPoint[N: static[int8]](coord: Coord[N]): Point[N] {.inline.}=
   ## Convert a tuple of coordinate to index representation adjusted for borders
@@ -32,14 +33,14 @@ func toPoint[N: static[int8]](coord: Coord[N]): Point[N] {.inline.}=
 
   # TODO, proc/func requires the N as input at the moment.
 
-  Point[N] int16(coord.col + 1) * int16(N + 2) + coord.row.int16 + 1
+  Point[N] int16(coord.row + 1) * int16(N + 2) + coord.col.int16 + 1
 
 func pos*(coordStr: string, board_size: static[int8]): Point[board_size] =
   toPoint toCoord(coordStr, board_size)
 
 func toCoord[N: static[int8]](point: Point[N]): Coord[N] {.inline.}=
-  result.col = int8 point.int16 mod (N+2).int16 - 1
-  result.row = int8 point.int16 div (N+2).int16 - 1
+  result.col = int8 point.int16 div (N+2).int16 - 1
+  result.row = int8 point.int16 mod (N+2).int16 - 1
 
 ################################ Display ###################################
 
@@ -55,10 +56,11 @@ func toChar*(intersection: Intersection): char {.inline.}=
 func `$`*[N: static[int8]](point: Point[N]): string {.inline.}=
   let (r, c) = point.toCoord
 
+  # This is unreachable with bounds checking dur to Coord range constraints
   if r notin {0'i8 .. N - 1} or c notin {0'i8 .. N - 1}:
     result = &"Border({c+1}, {r+1})" # Border will be displayed with position 0 or N+1
 
-  result = $Cols[c+1] & $(r+1)
+  result = $Cols[c+1] & $(N - r)
 
 func `$`*[N: static[int8]](board: Board[N]): string =
   # Display a go board
