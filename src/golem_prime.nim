@@ -15,7 +15,7 @@ when isMainModule:
   doAssert $pos("D4", 19'i8) == "D4"
 
 when isMainModule:
-  const N: int8 = 9
+  const N: int8 = 7
   echo "\n###### board ######"
   var a = newBoardState(N)
   echo a.board
@@ -33,6 +33,7 @@ when isMainModule:
 
     let move = a.random_move
     if move == Point[N](-1):
+      echo "\n------------------"
       echo "No legal move left!"
       break
 

@@ -110,6 +110,10 @@ proc remove_stone(self: BoardState, point: Point) {.inline.}=
   self.board[point] = Empty
   self.singleton Empty, point
 
+  debugecho "Removed: " & $point &
+            ", group_id: " & $self.group_id(point).int16 &
+            ", group: " & $self.group(point)
+
 func is_opponent_eye*(self: BoardState, color: Player, point: Point): bool =
   ## Returns true if a stone would be in the opponent eye.
   for neighbor in point.neighbors:
@@ -180,16 +184,16 @@ func merge_with_groups*(self: BoardState, color: Player, point: Point) =
 
 func remove_group(self: BoardState, point: Point) =
   ## Remove the group input point is part of
-  # This does not clear leftover metadata
+
+  let removed_group = self.group_id(point)
 
   for stone in self.groups.groupof(point):
     self.remove_stone stone
 
     # Update liberties of neighboring groups
     for neighbor in stone.neighbors:
-      # We don't care if we update the liberties of the group the deleted stone is part of
-      # We don't want an "if" branch in a tight for loop
-      self.group(neighbor).add_as_lib stone
+      if (group_id(self, neighbor) != removed_group) or self.board[neighbor] == Empty:
+        self.group(neighbor).add_as_lib stone
 
 func capture_deads_around*(self: BoardState, color: Player, point: Point) =
   ## Capture dead group around a stone
