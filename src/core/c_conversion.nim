@@ -46,7 +46,7 @@ func toCoord[N: static[int8]](point: Point[N]): Coord[N] {.inline.}=
 
 const stone_display: array[Intersection, char] = [
   Empty: '.',
-  Black: 'X',
+  Black: '#',
   White: 'O',
   Border: ' ']
 
@@ -70,7 +70,7 @@ func `$`*[N: static[int8]](board: Board[N]): string =
 
   # TODO requires int and not int8 otherwise `$` doesn't catch it: https://github.com/nim-lang/Nim/issues/7611
 
-  result = "  " & Cols[0..N] & '\n'
+  result = "   " & Cols[0..N] & '\n'
 
   for i, stone in board:
     result.add stone.toChar
@@ -78,7 +78,10 @@ func `$`*[N: static[int8]](board: Board[N]): string =
       result.add '\n'
       let row = N - i div (N+2)
       if row in 1..N:
-        result.add &" {row}"
+        # Workaround strformat with static: https://github.com/nim-lang/Nim/issues/7632
+        let fmt_row = if row < 10: &"  {row}"
+                      else: &" {row}"
+        result.add fmt_row
 
 func `$`*(s: EmptyPoints): string =
 
