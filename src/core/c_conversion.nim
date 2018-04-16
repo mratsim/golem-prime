@@ -3,8 +3,10 @@
 # (license terms are at https://www.apache.org/licenses/LICENSE-2.0).
 
 import
-  strutils,
+  strutils, strformat,
   ../datatypes
+
+const Cols = " ABCDEFGHJKLMNOPQRSTUVWXYZ "
 
 ################################ Coordinates ###################################
 
@@ -17,9 +19,8 @@ func toCoord(coordStr: string, N: static[int8]): Coord[N] =
   #   - input of length 2 or 3 like A1 and Q16
   #   - input in uppercase
   assert coordStr.len <= 3
-  const cols = " ABCDEFGHJKLMNOPQRSTUVWXYZ "
 
-  result.col = cols.find(coordStr[0]) - 1
+  result.col = Cols.find(coordStr[0]) - 1
   result.row = coordStr[1 .. coordStr.high].parseInt - 1
 
 func toPoint[N: static[int8]](coord: Coord[N]): Point[N] {.inline.}=
@@ -36,6 +37,10 @@ func toPoint[N: static[int8]](coord: Coord[N]): Point[N] {.inline.}=
 func pos*(coordStr: string, board_size: static[int8]): Point[board_size] =
   toPoint toCoord(coordStr, board_size)
 
+func toCoord[N: static[int8]](point: Point[N]): Coord[N] {.inline.}=
+  result.col = int8 point.int16 mod (N+2).int16 - 1
+  result.row = int8 point.int16 div (N+2).int16 - 1
+
 ################################ Display ###################################
 
 const stone_display: array[Intersection, char] = [
@@ -47,8 +52,13 @@ const stone_display: array[Intersection, char] = [
 func toChar*(intersection: Intersection): char {.inline.}=
   stone_display[intersection]
 
-func `$`*(point: Point): string =
-  $point.int16
+func `$`*[N: static[int8]](point: Point[N]): string {.inline.}=
+  let (r, c) = point.toCoord
+
+  if r notin {0'i8 .. N - 1} or c notin {0'i8 .. N - 1}:
+    result = &"Border({c+1}, {r+1})" # Border will be displayed with position 0 or N+1
+
+  result = $Cols[c+1] & $(r+1)
 
 func `$`*[N: static[int8]](board: Board[N]): string =
   # Display a go board
@@ -64,3 +74,10 @@ func `$`*[N: static[int8]](board: Board[N]): string =
     result.add stone.toChar
     if i mod (N+2) == N+1: # Test if we reach end of line
       result.add '\n'
+
+func `$`*(s: EmptyPoints): string =
+
+  result = "[ "
+  for i in 0 ..< s.len:
+    result &= $s.list[i] & ", "
+  result &= " ]"

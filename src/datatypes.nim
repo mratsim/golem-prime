@@ -96,11 +96,19 @@ type
     # TODO requires int and not int8 otherwise `$` doesn't catch it: https://github.com/nim-lang/Nim/issues/7611
 
   EmptyPoints*[N: static[int8]] = object
-    # We can't use Nim bitpacked set as we need a random access container
-    # to generate random moves efficiently :/
-    data*: set[9 .. (19+2)*(19+1) - 1]
-    len*: int16     # sets have a card(inality) proc but it is not O(1), it traverse both set and unset values
-    last*: Point[N] # Easily get the last added point for ko checking
+    # We need a set/hashset with the following properties:
+    #  - Can store up to ~500 elements at most (covered by `set` and `Hashset`)
+    #  - Incl and Excl as fast as possible (in hot path) (covered by `set` and `Hashset`)
+    #  - Can take the length without iterating (in hot path) (covered by `Hashset`, can use a int16 length field or popcount with `set`)
+    #  - Can take a random value from the set as fast as possible (in hot path for Monte-Carlo simulations) (covered by ????)
+    #  - Have access to the last inserted elements for ko checking
+
+    # Implementation
+    # - An array of indices that maps input -> -1 if not present in set or its index in an array of value present (allows incl/excl)
+    # - An (array of values + length) present in the set (allows fast random pick).
+    indices*: array[(N.int16 + 2) * (N.int16 + 2), range[-1'i16 .. N.int16 * N.int16]]
+    list*: array[N.int16 * N.int16, Point[N]]
+    len*: int16
 
   BoardState*[N: static[int8]] = ref object
     ## Dynamic data related to the board

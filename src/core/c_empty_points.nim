@@ -2,30 +2,71 @@
 # Distributed under the Apache v2 License
 # (license terms are at https://www.apache.org/licenses/LICENSE-2.0).
 
-import ../datatypes
+import ../datatypes, random
 
-func contains*(x: EmptyPoints, point: Point): bool {.inline.} =
-  x.data.contains(point.int16)
+func contains*(s: EmptyPoints, point: Point): bool {.inline.} =
+  assert point.int16 != -1
+  s.indices[point.int16] != -1
 
-func incl*(x: var EmptyPoints, point: Point) {.inline.} =
+func reset_border*(s: var EmptyPoints, point: Point) {.inline.} =
+  ## Add a point to the border
+  s.indices[point.int16] = -1
+
+func reset_empty*(s: var EmptyPoints, point: Point) {.inline.} =
+  ## Add a point to the empty list without pre-checks
+  s.indices[point.int16] = s.len
+  s.list[s.len] = point
+  inc s.len
+
+func peek*[N: static[int8]](s: EmptyPoints[N]): Point[N] {.inline.} =
+  ## Returns the last point in the set.
+  ## Note: if an item is deleted this is NOT the last inserted point.
+
+  assert s.len > 0, "Error: there is no empty points"
+  s.list[s.len - 1]
+
+func incl*[N: static[int8]](s: var EmptyPoints[N], point: Point[N]) {.inline.} =
   ## Add a Point to a set of EmptyPoints
   ## The Point should not be in EmptyPoints already. It will throw
   ## an error in debug mode otherwise
 
-  assert point notin x, "Error: " & $point & " is already in EmptyPoints"
   # We assume point is not already in the set to avoid branching when updating the count
+  assert point notin s, "Error: " & $point & " is already in EmptyPoints"
+  # Bound checking
+  assert s.len <= N.int16 * N.int16, "EmptyPoints is already at max capacity."
 
-  x.data.incl point.int16
-  x.last = point # Used for ko checking
-  inc x.len
+  s.indices[point.int16] = s.len
+  s.list[s.len] = point
+  inc s.len
 
-func excl*(x: var EmptyPoints, point: Point) {.inline.} =
+func excl*(s: var EmptyPoints, point: Point) {.inline.} =
   ## Remove a Point to a set of EmptyPoints
   ## The Point should be in EmptyPoints. It will throw
   ## an error in debug mode otherwise
 
-  assert point in x, "Error: " & $point & " is not in EmptyPoints"
   # We assume point is in the set to avoid branching when updating the count
+  assert point in s, "Error: " & $point & " is not in EmptyPoints"
 
-  x.data.excl point.int16
-  dec x.len
+  # We do constant time deletion by replacing the deleted point
+  # by the last value in the list
+
+  let del_idx = s.indices[point.int16]
+
+  s.indices[point.int16] = -1
+  s.indices[s.peek.int16] = del_idx   # Last value now points to deleted index
+  dec s.len
+  s.list[del_idx] = s.list[s.len]     # Deleted item is now last value
+
+# Random seed setting for reproducibility
+# You can pass your own with:
+const random_seed {.intdefine.} = 0
+when random_seed == 0:
+  randomize()
+else:
+  randomize random_seed
+
+proc rand*[N: static[int8]](s: EmptyPoints[N]): Point[N] {.inline.}=
+  ## Generate a random move from a set of empty points
+  ## Nim random uses Xoroshiro128+ PRNG which is very fast
+  ## and produces high quality random numbers
+  s.list[rand(0'i16 .. s.len-1)]

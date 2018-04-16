@@ -22,9 +22,10 @@ func newBoardState*(size: static[int8]): BoardState[size] {.noInit.} =
         i mod (size+2) == size+1: # last column
       mstone = Border
       result.groups.metadata[GroupID[size] i].reset_border
+      result.empty_points.reset_border Point[size](i)
     else:
       mstone = Empty
-      result.empty_points.incl Point[size](i)
+      result.empty_points.reset_empty Point[size](i)
 
 {.this: self.} # TODO: this does not work with static - https://github.com/nim-lang/Nim/issues/7618
 proc place_stone*(self: BoardState, color: Player, point: Point) {.inline.}=
@@ -32,7 +33,8 @@ proc place_stone*(self: BoardState, color: Player, point: Point) {.inline.}=
   ## This only updates board state metadata
   ## And does not trigger groups/stones related life & death computation
 
-  assert self.board[point] == Empty
+  assert self.board[point] == Empty, "Error: position " & $point &
+    " is currently occupied by " & $self.board[point]
 
   self.empty_points.excl point
   if color == Black:
@@ -133,10 +135,11 @@ func merge_with_groups*(self: BoardState, color: Player, point: Point) =
   # If there are 2 groups or more of the same color that become connected
   for neighbor in point.neighbors:
     {.unroll: 4.} # TODO when unroll pragma is effective check code size and cache effect.
-    if self.board[neighbor] == color and neighbor != max_neighbor:
+    let group_neighbor = self.group_id(neighbor)
+    if self.board[neighbor] == color and group_neighbor != max_group_id:
 
       # Merge the metadata
-      self.groups.metadata.merge(max_group_id, self.group_id(neighbor))
+      self.groups.metadata.merge(max_group_id, group_neighbor)
 
       # Path compression: rattach all stones from smallest group to the bigger group
       for stone in self.groups.groupof(neighbor):
@@ -192,5 +195,5 @@ func play*[N: static[int8]](self: BoardState[N], color: Player, point: Point[N])
   self.capture_deads_around(color, point)
 
   self.ko_pos = if potential_ko and prev_len_empty_points == self.empty_points.len:
-                  self.empty_points.last
+                  self.empty_points.peek
                 else: Point[N](-1)
