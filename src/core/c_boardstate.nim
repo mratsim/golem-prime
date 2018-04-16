@@ -12,7 +12,7 @@ func newBoardState*(size: static[int8]): BoardState[size] {.noInit.} =
   result.next_player = Black
   result.nb_black_stones = 0
   result.ko_pos = Point[size](-1)
-  initGroups(result.groups)
+  reset(result.groups)
 
   for i, mstone in result.board.mpairs:
     # Set borders

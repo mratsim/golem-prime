@@ -4,29 +4,28 @@
 
 import
   ../datatypes
-
-func initGroups*[N: static[int8]](groups: var Groups[N]) =
+{.this:self.}
+func reset*[N: static[int8]](groups: var Groups[N]) =
   for idx, group_id in mpairs(groups.id):
     group_id = GroupID[N](idx)
   for next_stone in groups.next_stones.mitems:
     next_stone = Point[N](-1)
 
-{.this:self.}
 func reset*(self: var GroupMetadata) {.inline.} =
-  self.sum_square_degree_vertices = 0
-  self.sum_degree_vertices = 0
-  self.nb_stones = 0
-  self.nb_pseudo_libs = 0
-  self.color = Empty
+  sum_square_degree_vertices = 0
+  sum_degree_vertices = 0
+  nb_stones = 0
+  nb_pseudo_libs = 0
+  color = Empty
 
 func reset_border*(self: var GroupMetadata) {.inline.} =
   ## Special values for the border stones. They have infinite liberties
   ## and should never be in atari
-  self.sum_square_degree_vertices = high(int32)
-  self.sum_degree_vertices = high(int16)
-  self.nb_pseudo_libs = high(int16)
-  self.nb_stones = 0
-  self.color = Border
+  sum_square_degree_vertices = high(int32)
+  sum_degree_vertices = high(int16)
+  nb_pseudo_libs = high(int16)
+  nb_stones = 0
+  color = Border
 
 iterator groupof*[N: static[int8]](g: Groups[N], start_stone: Point[N]): Point[N] =
   ## Iterates over the all the stones of the same group as the input
@@ -68,4 +67,4 @@ func concat*(self: var NextStones, p1, p2: Point) {.inline.}=
   swap(self[p1], self[p2])
 
 func isDead*(self: GroupMetadata): bool {.inline.}=
-  self.nb_pseudo_libs == 0
+  nb_pseudo_libs == 0

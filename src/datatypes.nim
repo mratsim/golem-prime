@@ -96,10 +96,8 @@ type
     # TODO requires int and not int8 otherwise `$` doesn't catch it: https://github.com/nim-lang/Nim/issues/7611
 
   EmptyPoints*[N: static[int8]] = object
-    # Broken https://github.com/nim-lang/Nim/issues/7546
-    # And    https://github.com/nim-lang/Nim/issues/7547
-    # Hardcoded as workaround (we don't include first and last row to save space)
-    # We assume at least a 9x9 board and at most a 19x19 board for the hardcoded values
+    # We can't use Nim bitpacked set as we need a random access container
+    # to generate random moves efficiently :/
     data*: set[9 .. (19+2)*(19+1) - 1]
     len*: int16     # sets have a card(inality) proc but it is not O(1), it traverse both set and unset values
     last*: Point[N] # Easily get the last added point for ko checking
