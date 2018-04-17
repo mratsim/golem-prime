@@ -31,12 +31,12 @@ template groupof_impl(self: NextStones, start_stone: Point): untyped =
 
   yield start_stone
 
-  var stone = next[start_stone]
+  var stone = self[start_stone]
 
   if stone != Point[N](-1):
     while stone != start_stone:
       yield stone
-      stone = next[stone]
+      stone = self[stone]
 
 iterator groupof_noalias*[N: static[int8]](self: BoardState, start_stone: Point[N]): Point[N] =
   ## Iterates over the all the stones of the same group as the input
