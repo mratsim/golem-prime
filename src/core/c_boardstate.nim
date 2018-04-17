@@ -56,7 +56,7 @@ func reset*[N: static[int8]](self: BoardState[N]) =
   ## Reset the board state without reallocating
   ## and triggering the GC
 
-  self.next_player = Black
+  self.to_move = Black
   self.nb_black_stones = 0
   self.ko_pos = Point[N](-1)
   reset(self.groups)

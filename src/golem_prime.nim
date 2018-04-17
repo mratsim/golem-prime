@@ -15,7 +15,7 @@ when isMainModule:
   # Sanity check:
   doAssert $pos("D4", 19'i8) == "D4"
 
-when isMainModule:
+when true and isMainModule:
 
   proc simulate[N: static[int8]](a: BoardState[N], simulation_id: int) =
     a.reset()
@@ -27,7 +27,7 @@ when isMainModule:
       echo &"Simulation.Iteration #{simulation_id}.{counter}"
       echo a.board
 
-      echo "Player: " & $a.next_player
+      echo "Player: " & $a.to_move
 
       let move = a.random_move
       if (move == Point[N](-1)):
@@ -40,13 +40,13 @@ when isMainModule:
       echo "Empty set len: " & $a.empty_points.len
 
       a.play(move)
-      a.next_player = a.next_player.opponent
+      a.next_player()
 
       inc counter
       if counter >= 500:
         break
 
-  const N: int8 = 19
+  const N: int8 = 9
   echo "\n###### Board ######"
   var a = newBoardState(N)
   # echo a.board
@@ -56,7 +56,7 @@ when isMainModule:
 
   let arguments = commandLineParams()
   let nb_iter = if arguments.len > 0: parseInt($arguments[0])
-                else: 100_000
+                else: 1
 
   let start = cpuTime()
   for i in 0 ..< nb_iter:
@@ -68,7 +68,7 @@ when isMainModule:
 
 
 when false and isMainModule:
-  const N: int8 = 9
+  const N: int8 = 19
   var a = newBoardState(N)
 
   echo "\nSize of BoardState on the stack: " & $sizeof(a)
@@ -81,35 +81,21 @@ when false and isMainModule:
   echo "total cache lines: " & $(total_size.float / 64.0f)
 
   echo "\nMisc sizes"
-  echo "Size of Move: " & $sizeof(Move[19])
+  echo "Size of Move: " & $sizeof(Move[N])
   echo "Size of Intersection: " & $sizeof(Intersection)
 
   echo "\n###### Playing: 19x19 board ######"
-  a.play(Black, pos("Q16", 19'i8))
-  a.play(White, pos("A4", 19'i8))
-  a.play(Black, pos("Q4", 19'i8))
-  a.play(White, pos("B4", 19'i8))
+  a.play pos("Q16", N); a.next_player
+  a.play pos("A4", N) ; a.next_player
+  a.play pos("Q4", N) ; a.next_player
+  a.play pos("B4", N) ; a.next_player
   echo a.board
 
-  echo "\n A4"
-  let A4 = pos("A4", 19'i8)
-  echo a.group_id(A4).int16
-  echo a.group(A4)
-  echo "next A4: " & $a.group_next(A4)
-
-  echo "\n B4"
-  let B4 = pos("B4", 19'i8)
-  echo a.group_id(B4).int16
-  echo a.group(B4)
-  echo "next B4: " & $a.group_next(B4)
-
-  echo "\n Group"
-  for stone in groupof(a.groups, A4):
-    echo $stone
-
   echo "\n###### Capturing white ######"
-  a.play(Black, pos("A3", 19'i8))
-  a.play(Black, pos("B3", 19'i8))
-  a.play(Black, pos("C4", 19'i8))
-  a.play(Black, pos("B5", 19'i8))
-  a.play(Black, pos("A5", 19'i8))
+  a.play pos("A3", N), Black
+  a.play pos("B3", N), Black
+  a.play pos("C4", N), Black
+  a.play pos("B5", N), Black
+  a.play pos("A5", N), Black
+
+  echo a.board

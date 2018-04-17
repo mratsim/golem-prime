@@ -129,7 +129,7 @@ type
     empty_points*: EmptyPoints[N]  # Keep track of empty intersections
     nb_black_stones*: int16        # With black stones and empty positions we can recompute white score
     ko_pos*: Point[N]              # Last ko position
-    next_player*: Player
+    to_move*: Player
 
   GameState*[N: static[int8]] = object
     ## Metadata related to the game. Everything that is not copied
@@ -161,6 +161,9 @@ const opponents: array[Player, Player] = [
 
 func opponent*(color: Player): Player {.inline.} =
   opponents[color]
+
+func next_player*(self: BoardState) {.inline.} =
+  self.to_move = self.to_move.opponent
 
 ################################ Go common logic ###################################
 

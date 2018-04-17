@@ -38,7 +38,7 @@ func play*[N: static[int8]](self: BoardState[N], point: Point[N], color: Player)
                 else: Point[N](-1)
 
 func play*[N: static[int8]](self: BoardState[N], point: Point[N]) {.inline.}=
-  self.play point, self.next_player
+  self.play point, self.to_move
 
 func is_legalish_move[N: static[int8]](self: BoardState[N], point: Point[N], color: Player): bool =
   ## Check if a move looks legal
@@ -82,7 +82,7 @@ func is_legalish_move[N: static[int8]](self: BoardState[N], point: Point[N], col
   return false # Opponent's true eye or filling the dame will suicide.
 
 func is_legalish_move[N: static[int8]](self: BoardState[N], point: Point[N]) {.inline.}=
-  self.is_legalish_move point self.next_player
+  self.is_legalish_move point self.to_move
 
 proc random_move*[N: static[int8]](self: BoardState[N], color: Player): Point[N] =
 
@@ -106,4 +106,4 @@ proc random_move*[N: static[int8]](self: BoardState[N], color: Player): Point[N]
       return Point[N](-1)
 
 proc random_move*[N: static[int8]](self: BoardState[N]): Point[N] {.inline.}=
-  self.random_move self.next_player
+  self.random_move self.to_move
