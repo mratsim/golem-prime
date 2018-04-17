@@ -70,11 +70,11 @@ func reset*[N: static[int8]](self: BoardState[N]) =
         i mod (N+2) == 0 or    # first column
         i mod (N+2) == N+1:    # last column
       mstone = Border
-      self.groups.metadata[GroupID[N] i].reset_border
+      self.groups.metadata[GroupID[N] i].reset_border()
       self.empty_points.reset_border Point[N](i)
     else:
       mstone = Empty
-      self.groups.metadata[GroupID[N] i].reset_empty
+      self.groups.metadata[GroupID[N] i].reset_empty()
       self.empty_points.reset_empty Point[N](i)
 
   # To ease testing if a move is legal, even empty positions

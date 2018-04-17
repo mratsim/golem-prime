@@ -25,7 +25,13 @@ when isMainModule:
     a1.next_player()
 
   a1.reset()
-  doAssert a0[] == a1[]
+  doAssert a0.groups == a1.groups
+  doAssert a0.board == a1.board
+  doAssert a0.empty_points == a1.empty_points
+  doAssert a0.nb_black_stones == a1.nb_black_stones
+  doAssert a0.ko_pos == a1.ko_pos
+  doAssert a0.to_move == a1.to_move
+
 
 when true and isMainModule:
 
