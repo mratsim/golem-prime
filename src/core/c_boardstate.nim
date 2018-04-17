@@ -144,7 +144,7 @@ func merge_with_groups*(self: BoardState, color: Player, point: Point) =
 
   # We use an "union-by-rank" algorithm, merging the smallest groups into the biggest.
   var
-    max_nb_stones: int16
+    max_nb_stones: GoInt
     max_neighbor: Point
 
   for neighbor in point.neighbors:

@@ -3,7 +3,7 @@
 # (license terms are at https://www.apache.org/licenses/LICENSE-2.0).
 
 import
-  ../datatypes, ../debug, ./c_boardstate, ./c_empty_points, ./c_groups,
+  ../datatypes, ./c_boardstate, ./c_empty_points, ./c_groups,
   random
 
 # Random seed setting for reproducibility

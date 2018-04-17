@@ -2,27 +2,24 @@
 # Distributed under the Apache v2 License
 # (license terms are at https://www.apache.org/licenses/LICENSE-2.0).
 
-import
-  macros, sequtils,
-  debug
-
-export debug
+# import debug
+# export debug
 
 # TODO: template or macro for (N.int16 + 2) * (N.int16 + 2)
 
 type
   ################################ Coordinates ###################################
+  GoInt* = int16    # Easily switch the base int type for perf testing. 2 concerns are competing:
+                    #  - native word size so that there is no zero-extend/convert for register moves and array accesses
+                    #  - Cache locality: If data can stay in L1 cache it's much better and smaller data: easier to move.
+                    # Should be int16 minimum (int8/uint8 can only represent 128/256 values)
+  GoInt2* = uint32  # We use graph theory "Sum of square of vertex degrees" to speedily determine atari
+                    # Should be int32 minimum
 
   # We index from 0
   Coord*[N: static[int8]] = tuple[col, row: range[0'i8 .. (N-1)]]
-  Point*[N: static[int8]] = distinct range[-1'i16 .. (N.int16 + 2) * (N.int16 + 2) - 1]
-    # Easily switch how to index for perf testing: native word size (int) vs cache locality (int16)
+  Point*[N: static[int8]] = distinct range[-1.int16 .. (N.int16 + 2) * (N.int16 + 2) - 1]
     # -1 is used for ko or group position: nil
-    # TODO something more robust
-    #  - object variant
-    #  - options
-    #  - separate in 2 types ValidPoints and Ko Points
-
     # Can't use plain static[int]: https://github.com/nim-lang/Nim/issues/7609
 
   ################################ Coordinates ###################################
@@ -53,13 +50,13 @@ type
 
   GroupMetadata* = object
     # Graph theory. We use uint because we want the rollover on overflow.
-    sum_square_degree_vertices*: uint32
-    sum_degree_vertices*: uint16
+    sum_square_degree_vertices*: GoInt2
+    sum_degree_vertices*: GoInt
     # Go Metadata (nb_stones acts as "rank" for disjoint sets "union by rank" optimization)
-    nb_stones*: range[0'i16 .. high(int16)]
-    nb_pseudo_libs*: range[0'i16 .. high(int16)]
+    nb_stones*: range[0.int16 .. high(int16)]
+    nb_pseudo_libs*: range[0.int16 .. high(int16)]
 
-  GroupID*[N: static[int8]] = distinct range[0'i16 .. (N.int16 + 2) * (N.int16 + 2) - 1]
+  GroupID*[N: static[int8]] = distinct range[0.int16 .. (N.int16 + 2) * (N.int16 + 2) - 1]
     # Alias to prevent directly accessing group metadata
     # without getting the groupID first
 
@@ -72,9 +69,9 @@ type
   # static[int8] can go beyond high(i8) for some reason
   # TODO: use distinct for proper type-checking: Pending borrowing for static
   #        https://github.com/nim-lang/Nim/issues/7552
-  GroupsMetaPool*[N: static[int8]] = array[(N.int16 + 2) * (N.int16 + 2), GroupMetadata]
-  GroupIDs*[N: static[int8]]       = array[(N.int16 + 2) * (N.int16 + 2), GroupID[N]]
-  NextStones*[N: static[int8]]     = array[(N.int16 + 2) * (N.int16 + 2), Point[N]]
+  GroupsMetaPool*[N: static[int8]] = array[(N + 2) * (N + 2), GroupMetadata]
+  GroupIDs*[N: static[int8]]       = array[(N + 2) * (N + 2), GroupID[N]]
+  NextStones*[N: static[int8]]     = array[(N + 2) * (N + 2), Point[N]]
 
   Groups*[N: static[int8]] = object
     ## Groups Common Fate Graph. Represented as an array-based disjoint-set.
@@ -98,7 +95,7 @@ type
 
     # TODO requires int and not int8 otherwise `$` doesn't catch it: https://github.com/nim-lang/Nim/issues/7611
 
-  EmptyIdx*[N: static[int8]] = range[-1'i16 .. N.int16 * N.int16]
+  EmptyIdx*[N: static[int8]] = range[-1.int16 .. N.int16 * N.int16]
 
   EmptyPoints*[N: static[int8]] = object
     # We need a set/hashset with the following properties:
@@ -111,9 +108,9 @@ type
     # Implementation
     # - An array of indices that maps input -> -1 if not present in set or its index in an array of value present (allows incl/excl)
     # - An (array of values + length) present in the set (allows fast random pick).
-    indices*: array[(N.int16 + 2) * (N.int16 + 2), EmptyIdx[N]]
-    list*: array[N.int16 * N.int16, Point[N]]
-    len*: int16
+    indices*: array[(N + 2) * (N + 2), EmptyIdx[N]]
+    list*: array[N * N, Point[N]]
+    len*: GoInt # TODO restrict to 0+
 
   BoardState*[N: static[int8]] = ref object
     ## Dynamic data related to the board
@@ -125,7 +122,7 @@ type
     groups*: Groups[N]             # Track the groups on board
     board*: Board[N]
     empty_points*: EmptyPoints[N]  # Keep track of empty intersections
-    nb_black_stones*: int16        # With black stones and empty positions we can recompute white score
+    nb_black_stones*: GoInt        # With black stones and empty positions we can recompute white score
     ko_pos*: Point[N]              # Last ko position
     to_move*: Player
 
@@ -151,10 +148,10 @@ const MaxNbMoves* = 512
 ################################ Go common logic ###################################
 
 iterator neighbors*[N: static[int8]](idx: Point[N]): Point[N] =
-  yield Point[N] idx.int16 - 1
-  yield Point[N] idx.int16 + 1
-  yield Point[N] idx.int16 - (N+2)
-  yield Point[N] idx.int16 + (N+2)
+  yield Point[N] idx.GoInt - 1
+  yield Point[N] idx.GoInt + 1
+  yield Point[N] idx.GoInt - (N+2)
+  yield Point[N] idx.GoInt + (N+2)
 
 const opponents: array[Player, Player] = [
   Black: Player White,
@@ -175,26 +172,26 @@ template genIndexersN(Container, Idx, Value) =
   #       https://github.com/nim-lang/Nim/issues/7552
 
   func `[]`*[N: static[int8]](container: Container[N], idx: Idx[N]): Value[N] {.inline.} =
-    container[idx.int16]
+    container[idx.GoInt]
 
   func `[]`*[N: static[int8]](container: var Container[N], idx: Idx[N]): var Value[N] {.inline.} =
-    container[idx.int16]
+    container[idx.GoInt]
 
   func `[]=`*[N: static[int8]](container: var Container[N], idx: Idx[N], val: Value[N]){.inline.} =
-    container[idx.int16]
+    container[idx.GoInt]
 
 template genIndexers(Container, Idx, Value) =
   # TODO: Will be improved with borrowing for static:
   #       https://github.com/nim-lang/Nim/issues/7552
 
   func `[]`*[N: static[int8]](container: Container[N], idx: Idx[N]): Value {.inline.} =
-    container[idx.int16]
+    container[idx.GoInt]
 
   func `[]`*[N: static[int8]](container: var Container[N], idx: Idx[N]): var Value {.inline.} =
-    container[idx.int16]
+    container[idx.GoInt]
 
   func `[]=`*[N: static[int8]](container: var Container[N], idx: Idx[N], val: Value){.inline.} =
-    container[idx.int16] = val
+    container[idx.GoInt] = val
 
 genIndexers(GroupsMetaPool, GroupID, GroupMetadata)
 genIndexersN(GroupIDs, Point, GroupID)
@@ -202,6 +199,6 @@ genIndexersN(NextStones, Point, Point)
 genIndexers(Board, Point, Intersection)
 
 func `==`*(val1, val2: Point or GroupID): bool {.inline.}=
-  val1.int16 == val2.int16
+  val1.GoInt == val2.GoInt
 
 ################# Strongly checked indexers and iterators ##########################

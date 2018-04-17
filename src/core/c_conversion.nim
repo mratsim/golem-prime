@@ -39,8 +39,8 @@ func pos*(coordStr: string, board_size: static[int8]): Point[board_size] =
   toPoint toCoord(coordStr, board_size)
 
 func toCoord[N: static[int8]](point: Point[N]): Coord[N] {.inline.}=
-  result.col = int8 point.int16 div (N+2).int16 - 1
-  result.row = int8 point.int16 mod (N+2).int16 - 1
+  result.col = int8 point.GoInt div (N+2).GoInt - 1
+  result.row = int8 point.GoInt mod (N+2).GoInt - 1
 
 ################################ Display ###################################
 

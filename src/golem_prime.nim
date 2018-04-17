@@ -38,7 +38,7 @@ when isMainModule:
 
 when true and isMainModule:
 
-  const N: int8 = 19
+  const N: int8 = 9
 
   proc simulate[N: static[int8]](a: BoardState[N], simulation_id: int) =
     a.reset()
@@ -87,10 +87,15 @@ when true and isMainModule:
     a.simulate(i)
     # echo a.board
   let stop = cpuTIme()
-  echo &"Took {stop - start}s for {nb_iter} simulations"
 
+  let elapsed = stop - start
+  echo &"Took {elapsed}s for {nb_iter} simulations: {(nb_iter.float / (1000 * elapsed)):3} kpps (K playouts/s)"
 
+  # Bench: about 14.5~15.5 kpps on a i5-5257U mobile dual core (2.7 Ghz, turbo 3.1)
+  # 19x19  Note: this is without scoring and MCTS, just naive random playouts
 
+  # Bench: about 50 kpps on a i5-5257U mobile dual core (2.7 Ghz, turbo 3.1)
+  #   9x9  Note: this is without scoring and MCTS, just naive random playouts
 
 when false and isMainModule:
   const N: int8 = 19
