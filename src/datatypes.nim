@@ -152,8 +152,11 @@ const MaxNbMoves* = 512
 
 ################################ Go common logic ###################################
 
-func neighbors*[N: static[int8]](idx: Point[N]): array[4, Point[N]] {.inline.}=
-  [Point[N] idx.int16 - 1, Point[N] idx.int16 + 1, Point[N] idx.int16 - (N+2), Point[N] idx.int16 + (N+2)]
+iterator neighbors*[N: static[int8]](idx: Point[N]):Point[N] =
+  yield Point[N] idx.int16 - 1
+  yield Point[N] idx.int16 + 1
+  yield Point[N] idx.int16 - (N+2)
+  yield Point[N] idx.int16 + (N+2)
 
 const opponents: array[Player, Player] = [
   Black: Player White,
