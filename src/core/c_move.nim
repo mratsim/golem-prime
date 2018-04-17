@@ -3,7 +3,7 @@
 # (license terms are at https://www.apache.org/licenses/LICENSE-2.0).
 
 import
-  ../datatypes, ./c_boardstate, ./c_empty_points, ./c_groups,
+  ../datatypes, ../debug, ./c_boardstate, ./c_empty_points, ./c_groups,
   random
 
 # Random seed setting for reproducibility
@@ -29,9 +29,16 @@ func play*[N: static[int8]](self: BoardState[N], point: Point[N], color: Player)
     prev_len_empty_points = self.empty_points.len
 
   self.merge_with_groups           color, point
+  debugonly:
+    debugecho "-----------------------"
+    debug     "\n Before play at:"
   self.place_stone                 color, point
   self.remove_from_neighbors_libs         point
+  debugonly:
+    debug "\n After play at:"
   self.capture_deads_around        color, point
+  debugonly:
+    debug "\n After play & capture at:"
 
   self.ko_pos = if potential_ko and prev_len_empty_points == self.empty_points.len:
                   self.empty_points.peek

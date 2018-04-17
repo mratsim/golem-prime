@@ -17,36 +17,39 @@ when isMainModule:
 
 when true and isMainModule:
 
+  const N: int8 = 5
+
   proc simulate[N: static[int8]](a: BoardState[N], simulation_id: int) =
     a.reset()
 
-    var counter: int
-    while a.empty_points.len > 0:
+    echo a.groups.repr
 
-      # echo "\n\n#############"
-      # echo &"Simulation.Iteration #{simulation_id}.{counter}"
-      # echo a.board
+    # var counter: int
+    # while a.empty_points.len > 0:
 
-      # echo "Player: " & $a.to_move
+    #   echo "\n\n#############"
+    #   echo &"Simulation.Iteration #{simulation_id}.{counter}"
+    #   echo a.board
 
-      let move = a.random_move
-      if (move == Point[N](-1)):
-        # echo "\n------------------"
-        # echo "No legal move left!"
-        break
+    #   echo "Player: " & $a.to_move
 
-      # echo "Next move: " & $move
-      # echo "Empty set: " & $a.empty_points
-      # echo "Empty set len: " & $a.empty_points.len
+    #   let move = a.random_move
+    #   if (move == Point[N](-1)):
+    #     echo "\n------------------"
+    #     echo "No legal move left!"
+    #     break
 
-      a.play(move)
-      a.next_player()
+    #   echo "Next move: " & $move
+    #   echo "Empty set: " & $a.empty_points
+    #   echo "Empty set len: " & $a.empty_points.len
 
-      inc counter
-      if counter >= 500:
-        break
+    #   a.play(move)
+    #   a.next_player()
 
-  const N: int8 = 19
+    #   inc counter
+    #   if counter >= 500:
+    #     break
+
   echo "\n###### Board ######"
   var a = newBoardState(N)
   echo a.board

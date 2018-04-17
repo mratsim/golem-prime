@@ -6,13 +6,13 @@ import
   ../datatypes
 
 {.this:self.}
-func reset*[N: static[int8]](groups: var Groups[N]) =
+func reset_members*[N: static[int8]](groups: var Groups[N]) =
   for idx, group_id in mpairs(groups.id):
     group_id = GroupID[N](idx)
   for next_stone in groups.next_stones.mitems:
     next_stone = Point[N](-1)
 
-func reset*(self: var GroupMetadata) {.inline.} =
+func reset_empty*(self: var GroupMetadata) {.inline.} =
   sum_square_degree_vertices = 0
   sum_degree_vertices = 0
   nb_stones = 0

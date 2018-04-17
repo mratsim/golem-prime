@@ -22,12 +22,15 @@ func group_next[N: static[int8]](self: BoardState[N], point: Point[N]): var Poin
   self.groups.next_stones[point]
 
 ########## Group liberties ##########
-
+import sequtils
 func add_neighboring_libs(self: BoardState, point: Point) =
   ## Update groups metadata with liberties adjacent from a point
   for neighbor in point.neighbors:
     {.unroll: 4.}
     if self.board[neighbor] == Empty:
+      debugecho "\nPoint: " & $point
+      debugecho "GroupID: " & $self.group_id(point).int16
+      debugecho "Group: " & $self.group(point)
       self.group(point).add_as_lib neighbor
 
 func remove_from_neighbors_libs*(self: BoardState, point: Point) =
@@ -60,7 +63,7 @@ func reset*[N: static[int8]](self: BoardState[N]) =
   self.nb_black_stones = 0
   self.ko_pos = Point[N](-1)
 
-  self.groups.reset()
+  self.groups.reset_members()
   self.empty_points = EmptyPoints[N]()
 
   for i, mstone in self.board.mpairs:
@@ -71,10 +74,10 @@ func reset*[N: static[int8]](self: BoardState[N]) =
         i mod (N+2) == N+1:    # last column
       mstone = Border
       self.groups.metadata[GroupID[N] i].reset_border
-      debug_only:
-        self.empty_points.reset_border Point[N](i)
+      self.empty_points.reset_border Point[N](i)
     else:
       mstone = Empty
+      self.groups.metadata[GroupID[N] i].reset_empty
       self.empty_points.reset_empty Point[N](i)
 
   # To ease testing if a move is legal, even empty positions
