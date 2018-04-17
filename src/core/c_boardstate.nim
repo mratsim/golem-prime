@@ -12,13 +12,13 @@ import
 # Those operations are done at the board level to avoid double indirection
 # when checking the color of the neighboring stones.
 
-func group_id[N: static[int8]](self: BoardState[N], point: Point[N]): var GroupID[N] {.inline.}=
+func group_id[N: static[GoInt]](self: BoardState[N], point: Point[N]): var GroupID[N] {.inline.}=
   self.groups.id[point]
 
 func group*(self: BoardState, point: Point): var GroupMetadata {.inline.}=
   self.groups.metadata[self.groups.id[point]]
 
-func group_next[N: static[int8]](self: BoardState[N], point: Point[N]): var Point[N] {.inline.}=
+func group_next[N: static[GoInt]](self: BoardState[N], point: Point[N]): var Point[N] {.inline.}=
   self.groups.next_stones[point]
 
 ########## Group liberties ##########
@@ -38,7 +38,7 @@ func remove_from_neighbors_libs*(self: BoardState, point: Point) =
 
 ########## Initialization ##########
 
-func singleton[N: static[int8]](self: BoardState[N], color: range[Empty..White], point: Point[N]) =
+func singleton[N: static[GoInt]](self: BoardState[N], color: range[Empty..White], point: Point[N]) =
   ## Create a new group from a single stone
   ## Empty intersections also form a singleton group
 
@@ -50,7 +50,7 @@ func singleton[N: static[int8]](self: BoardState[N], color: range[Empty..White],
 
   self.add_neighboring_libs point
 
-func reset*[N: static[int8]](self: BoardState[N]) =
+func reset*[N: static[GoInt]](self: BoardState[N]) =
   ## Reset the board state without reallocating
   ## and triggering the GC
 
@@ -81,7 +81,7 @@ func reset*[N: static[int8]](self: BoardState[N]) =
     if stone == Empty:
       self.add_neighboring_libs Point[N](idx)
 
-func newBoardState*(size: static[int8]): BoardState[size] {.inline.} =
+func newBoardState*(size: static[GoInt]): BoardState[size] {.inline.} =
   new result
   result.reset()
 

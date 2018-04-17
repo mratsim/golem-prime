@@ -6,25 +6,25 @@ import
   ../datatypes
 
 {.this:self.}
-func reset_members*[N: static[int8]](groups: var Groups[N]) =
+func reset_members*[N: static[GoInt]](groups: var Groups[N]) =
   for idx, group_id in mpairs(groups.id):
     group_id = GroupID[N](idx)
   for next_stone in groups.next_stones.mitems:
     next_stone = Point[N](-1)
 
 func reset_meta*(self: var GroupMetadata) {.inline.} =
-  sum_square_degree_vertices = 0
-  sum_degree_vertices = 0
-  nb_stones = 0
-  nb_pseudo_libs = 0
+  sum_square_degree_vertices = 0.GoInt2
+  sum_degree_vertices = 0.GoInt
+  nb_stones = 0.GoInt
+  nb_pseudo_libs = 0.GoInt
 
 func reset_border*(self: var GroupMetadata) {.inline.} =
   ## Special values for the border stones. They have infinite liberties
   ## and should never be in atari
   sum_square_degree_vertices = high(GoInt2)
   sum_degree_vertices = high(GoInt)
-  nb_pseudo_libs = 4
-  nb_stones = 0
+  nb_pseudo_libs = 4.GoInt
+  nb_stones = 0.GoInt
 
 template groupof_impl(self: NextStones, start_stone: Point): untyped =
   # Implementation of the groupof iterator
@@ -38,13 +38,13 @@ template groupof_impl(self: NextStones, start_stone: Point): untyped =
       yield stone
       stone = self[stone]
 
-iterator groupof_noalias*[N: static[int8]](self: BoardState, start_stone: Point[N]): Point[N] =
+iterator groupof_noalias*[N: static[GoInt]](self: BoardState, start_stone: Point[N]): Point[N] =
   ## Iterates over the all the stones of the same group as the input
 
   let next = self.groups.next_stones # Need to store state to prevent aliasing
   groupof_impl(next, start_stone)
 
-iterator groupof_alias*[N: static[int8]](self: BoardState, start_stone: Point[N]): Point[N] =
+iterator groupof_alias*[N: static[GoInt]](self: BoardState, start_stone: Point[N]): Point[N] =
   ## Iterates over the all the stones of the same group as the input
 
   groupof_impl(self.groups.next_stones, start_stone)
@@ -77,7 +77,7 @@ func concat*(self: var NextStones, p1, p2: Point) {.inline.}=
   swap(self[p1], self[p2])
 
 func is_dead*(self: GroupMetadata): bool {.inline.}=
-  nb_pseudo_libs == 0
+  nb_pseudo_libs == 0.GoInt
 
 func is_in_atari*(self: GroupMetadata): bool {.inline.}=
   nb_pseudo_libs.GoInt2 * sum_square_degree_vertices == sum_degree_vertices.GoInt2 * sum_degree_vertices.GoInt2

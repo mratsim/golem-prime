@@ -10,7 +10,7 @@ const Cols = " ABCDEFGHJKLMNOPQRSTUVWXYZ "
 
 ################################ Coordinates ###################################
 
-func toCoord(coordStr: string, N: static[int8]): Coord[N] =
+func toCoord(coordStr: string, N: static[GoInt]): Coord[N] =
 
   # Constraints
   #   - No space in input
@@ -24,7 +24,7 @@ func toCoord(coordStr: string, N: static[int8]): Coord[N] =
   result.col = Cols.find(coordStr[0]) - 1
   result.row = N - coordStr[1 .. coordStr.high].parseInt
 
-func toPoint[N: static[int8]](coord: Coord[N]): Point[N] {.inline.}=
+func toPoint[N: static[GoInt]](coord: Coord[N]): Point[N] {.inline.}=
   ## Convert a tuple of coordinate to index representation adjusted for borders
   # We use a column-major representation i.e:
   #  - A2 <-> (0, 1) has index "1" adjusted for borders
@@ -33,14 +33,14 @@ func toPoint[N: static[int8]](coord: Coord[N]): Point[N] {.inline.}=
 
   # TODO, proc/func requires the N as input at the moment.
 
-  Point[N] int16(coord.row + 1) * int16(N + 2) + coord.col.int16 + 1
+  Point[N] (coord.row + 1) * (N + 2) + coord.col + 1
 
-func pos*(coordStr: string, board_size: static[int8]): Point[board_size] =
+func pos*(coordStr: string, board_size: static[GoInt]): Point[board_size] {.inline.}=
   toPoint toCoord(coordStr, board_size)
 
-func toCoord[N: static[int8]](point: Point[N]): Coord[N] {.inline.}=
-  result.col = int8 point.GoInt div (N+2).GoInt - 1
-  result.row = int8 point.GoInt mod (N+2).GoInt - 1
+func toCoord[N: static[GoInt]](point: Point[N]): Coord[N] {.inline.}=
+  result.col = point.GoInt div (N+2).GoInt - 1
+  result.row = point.GoInt mod (N+2).GoInt - 1
 
 ################################ Display ###################################
 
@@ -53,16 +53,16 @@ const stone_display: array[Intersection, char] = [
 func toChar(intersection: Intersection): char {.inline.}=
   stone_display[intersection]
 
-func `$`*[N: static[int8]](point: Point[N]): string {.inline.}=
+func `$`*[N: static[GoInt]](point: Point[N]): string {.inline.}=
   let (r, c) = point.toCoord
 
   # This is unreachable with bounds checking dur to Coord range constraints
-  if r notin {0'i8 .. N - 1} or c notin {0'i8 .. N - 1}:
+  if r notin {0.GoInt .. N - 1} or c notin {0.GoInt .. N - 1}:
     result = &"Border({c+1}, {r+1})" # Border will be displayed with position 0 or N+1
 
   result = $Cols[c+1] & $(N - r)
 
-func `$`*[N: static[int8]](board: Board[N]): string =
+func `$`*[N: static[GoInt]](board: Board[N]): string =
   # Display a go board
 
   # The go board as an extra border on the top, left, right and bottom

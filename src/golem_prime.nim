@@ -12,12 +12,14 @@ when defined(march_native):
   {.passC:"-march=native".}
 
 when isMainModule:
+  const Size: GoInt = 19
+
   # Sanity check: Position conversion
-  doAssert $pos("D4", 19'i8) == "D4"
+  doAssert $pos("D4", Size) == "D4"
 
   # Sanity check: Reset fully reset
-  let a0 = newBoardState(19'i8)
-  var a1 = newBoardState(19'i8)
+  let a0 = newBoardState(Size)
+  var a1 = newBoardState(Size)
 
   for _ in 0 ..< 100:
     let move = a1.random_move
@@ -37,10 +39,7 @@ when isMainModule:
 
 
 when true and isMainModule:
-
-  const N: int8 = 9
-
-  proc simulate[N: static[int8]](a: BoardState[N], simulation_id: int) =
+  proc simulate[N: static[GoInt]](a: BoardState[N], simulation_id: int) =
     a.reset()
 
     # echo a.groups.repr
@@ -72,7 +71,7 @@ when true and isMainModule:
         break
 
   echo "\n###### Board ######"
-  var a = newBoardState(N)
+  var a = newBoardState(Size)
   echo a.board
 
   echo "\n###### Random simulations ######"
@@ -98,7 +97,7 @@ when true and isMainModule:
   #   9x9  Note: this is without scoring and MCTS, just naive random playouts
 
 when false and isMainModule:
-  const N: int8 = 19
+  const N: GoInt = 19
   var a = newBoardState(N)
 
   echo "\nSize of BoardState on the stack: " & $sizeof(a)
