@@ -203,6 +203,7 @@ genIndexersN(GroupIDs, Point, GroupID)
 genIndexersN(NextStones, Point, Point)
 genIndexers(Board, Point, Intersection)
 
-func `==`*(val1, val2: Point or GroupID): bool = val1.int16 == val2.int16
+func `==`*(val1, val2: Point or GroupID): bool {.inline.}=
+  val1.int16 == val2.int16
 
 ################# Strongly checked indexers and iterators ##########################
