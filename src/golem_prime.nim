@@ -23,21 +23,21 @@ when true and isMainModule:
     var counter: int
     while a.empty_points.len > 0:
 
-      echo "\n\n#############"
-      echo &"Simulation.Iteration #{simulation_id}.{counter}"
-      echo a.board
+      # echo "\n\n#############"
+      # echo &"Simulation.Iteration #{simulation_id}.{counter}"
+      # echo a.board
 
-      echo "Player: " & $a.to_move
+      # echo "Player: " & $a.to_move
 
       let move = a.random_move
       if (move == Point[N](-1)):
-        echo "\n------------------"
-        echo "No legal move left!"
+        # echo "\n------------------"
+        # echo "No legal move left!"
         break
 
-      echo "Next move: " & $move
-      echo "Empty set: " & $a.empty_points
-      echo "Empty set len: " & $a.empty_points.len
+      # echo "Next move: " & $move
+      # echo "Empty set: " & $a.empty_points
+      # echo "Empty set len: " & $a.empty_points.len
 
       a.play(move)
       a.next_player()
@@ -46,10 +46,10 @@ when true and isMainModule:
       if counter >= 500:
         break
 
-  const N: int8 = 9
+  const N: int8 = 19
   echo "\n###### Board ######"
   var a = newBoardState(N)
-  # echo a.board
+  echo a.board
 
   echo "\n###### Random simulations ######"
   import times, os, strutils, strformat

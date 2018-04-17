@@ -59,14 +59,16 @@ func reset*[N: static[int8]](self: BoardState[N]) =
   self.to_move = Black
   self.nb_black_stones = 0
   self.ko_pos = Point[N](-1)
-  reset(self.groups)
+
+  self.groups.reset()
+  self.empty_points = EmptyPoints[N]()
 
   for i, mstone in self.board.mpairs:
     # Set borders
     if  i < N+2 or             # first row
-        i >= (N+1)*(N+2) or # last row
+        i >= (N+1)*(N+2) or    # last row
         i mod (N+2) == 0 or    # first column
-        i mod (N+2) == N+1: # last column
+        i mod (N+2) == N+1:    # last column
       mstone = Border
       self.groups.metadata[GroupID[N] i].reset_border
       debug_only:
@@ -83,7 +85,7 @@ func reset*[N: static[int8]](self: BoardState[N]) =
 
 func newBoardState*(size: static[int8]): BoardState[size] {.inline.} =
   new result
-  result.reset
+  result.reset()
 
 ########## Board operations on stones ##########
 

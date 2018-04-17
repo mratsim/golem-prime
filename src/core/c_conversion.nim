@@ -76,7 +76,7 @@ func `$`*[N: static[int8]](board: Board[N]): string =
     result.add stone.toChar
     if i mod (N+2) == N+1: # Test if we reach end of line
       result.add '\n'
-      let row = N - i div (N+2)
+      let row = N - (i div (N+2))
       if row in 1..N:
         # Workaround strformat with static: https://github.com/nim-lang/Nim/issues/7632
         let fmt_row = if row < 10: &"  {row}"
