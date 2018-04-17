@@ -45,7 +45,7 @@ func singleton[N: static[int8]](self: BoardState[N], color: range[Empty..White],
   self.group_id(point) = GroupID[N](point)
   self.group_next(point) = point
 
-  self.group(point).reset()
+  self.group(point).reset_meta()
   debug_only:
     self.group(point).color = color
   inc self.group(point).nb_stones
@@ -74,7 +74,7 @@ func reset*[N: static[int8]](self: BoardState[N]) =
       self.empty_points.reset_border Point[N](i)
     else:
       mstone = Empty
-      self.groups.metadata[GroupID[N] i].reset_empty()
+      self.groups.metadata[GroupID[N] i].reset_meta()
       self.empty_points.reset_empty Point[N](i)
 
   # To ease testing if a move is legal, even empty positions

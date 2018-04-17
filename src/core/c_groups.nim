@@ -12,13 +12,11 @@ func reset_members*[N: static[int8]](groups: var Groups[N]) =
   for next_stone in groups.next_stones.mitems:
     next_stone = Point[N](-1)
 
-func reset_empty*(self: var GroupMetadata) {.inline.} =
+func reset_meta*(self: var GroupMetadata) {.inline.} =
   sum_square_degree_vertices = 0
   sum_degree_vertices = 0
   nb_stones = 0
   nb_pseudo_libs = 0
-  debug_only:
-    color = Empty
 
 func reset_border*(self: var GroupMetadata) {.inline.} =
   ## Special values for the border stones. They have infinite liberties
