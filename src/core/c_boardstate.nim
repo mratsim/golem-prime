@@ -176,7 +176,7 @@ func merge_with_groups*(self: BoardState, color: Player, point: Point) =
       self.groups.metadata.merge(max_group_id, group_neighbor)
 
       # Path compression: rattach all stones from smallest group to the bigger group
-      for stone in self.groups.groupof(neighbor):
+      for stone in self.groupof(neighbor):
         self.group_id(stone) = max_group_id
 
       # Concatenate the linked rings listing stones in each group.
@@ -190,7 +190,7 @@ func remove_group(self: BoardState, point: Point) =
 
   let removed_group = self.group_id(point)
 
-  for stone in self.groups.groupof(point):
+  for stone in self.groupof(point):
     self.remove_stone stone
 
     # Update liberties of neighboring groups

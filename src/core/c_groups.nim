@@ -28,21 +28,23 @@ func reset_border*(self: var GroupMetadata) {.inline.} =
   debug_only:
     color = Border
 
-iterator groupof*[N: static[int8]](g: Groups[N], start_stone: Point[N]): Point[N] =
+iterator groupof*[N: static[int8]](self: BoardState, start_stone: Point[N]): Point[N] =
   ## Iterates over the all the stones of the same group as the input
 
   # Due to aliasing in "remove_from_lib" (nb_pseudo_libs can go negative)
   # we can't pass the Board State and have to create a temporary g
   # Benchmarking shows that this is costly in "_platform_memmove"
 
+  let next = self.groups.next_stones # Need to store state to prevent aliasing
+
   yield start_stone
 
-  var stone = g.next_stones[start_stone]
+  var stone = next[start_stone]
 
   if stone != Point[N](-1):
     while stone != start_stone:
       yield stone
-      stone = g.next_stones[stone]
+      stone = next[stone]
 
 func add_as_lib*(self: var GroupMetadata, point: Point) {.inline.} =
   ## Add an adjacent point as a liberty to a group
