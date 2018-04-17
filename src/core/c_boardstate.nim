@@ -52,33 +52,38 @@ func singleton[N: static[int8]](self: BoardState[N], color: range[Empty..White],
 
   self.add_neighboring_libs point
 
-func newBoardState*(size: static[int8]): BoardState[size] =
-  new result
+func reset*[N: static[int8]](self: BoardState[N]) =
+  ## Reset the board state without reallocating
+  ## and triggering the GC
 
-  result.next_player = Black
-  result.nb_black_stones = 0
-  result.ko_pos = Point[size](-1)
-  reset(result.groups)
+  self.next_player = Black
+  self.nb_black_stones = 0
+  self.ko_pos = Point[N](-1)
+  reset(self.groups)
 
-  for i, mstone in result.board.mpairs:
+  for i, mstone in self.board.mpairs:
     # Set borders
-    if  i < size+2 or             # first row
-        i >= (size+1)*(size+2) or # last row
-        i mod (size+2) == 0 or    # first column
-        i mod (size+2) == size+1: # last column
+    if  i < N+2 or             # first row
+        i >= (N+1)*(N+2) or # last row
+        i mod (N+2) == 0 or    # first column
+        i mod (N+2) == N+1: # last column
       mstone = Border
-      result.groups.metadata[GroupID[size] i].reset_border
+      self.groups.metadata[GroupID[N] i].reset_border
       debug_only:
-        result.empty_points.reset_border Point[size](i)
+        self.empty_points.reset_border Point[N](i)
     else:
       mstone = Empty
-      result.empty_points.reset_empty Point[size](i)
+      self.empty_points.reset_empty Point[N](i)
 
   # To ease testing if a move is legal, even empty positions
   # have liberties.
-  for idx, stone in result.board:
+  for idx, stone in self.board:
     if stone == Empty:
-      result.add_neighboring_libs Point[size](idx)
+      self.add_neighboring_libs Point[N](idx)
+
+func newBoardState*(size: static[int8]): BoardState[size] {.inline.} =
+  new result
+  result.reset
 
 ########## Board operations on stones ##########
 
@@ -161,7 +166,7 @@ func merge_with_groups*(self: BoardState, color: Player, point: Point) =
 
   # If there are 2 groups or more of the same color that become connected
   for neighbor in point.neighbors:
-    {.unroll: 4.} # TODO when unroll pragma is effective check code size and cache effect.
+    {.unroll: 4.} # TODO when unroll pragma is effective check code N and cache effect.
     let group_neighbor = self.group_id(neighbor)
     if self.board[neighbor] == color and group_neighbor != max_group_id:
 

@@ -8,44 +8,63 @@ import
 
 # Note: Golem Prime accepts a random seed parameter for reproducibily.
 #       Compile it with -d:random_seed=1234 to set the random seed to 1234
-
+when defined(march_native):
+  {.passC:"-march=native".}
 
 when isMainModule:
   # Sanity check:
   doAssert $pos("D4", 19'i8) == "D4"
 
 when isMainModule:
+
+  proc simulate[N: static[int8]](a: BoardState[N], simulation_id: int) =
+    a.reset()
+
+    var counter: int
+    while a.empty_points.len > 0:
+
+      echo "\n\n#############"
+      echo &"Simulation.Iteration #{simulation_id}.{counter}"
+      echo a.board
+
+      echo "Player: " & $a.next_player
+
+      let move = a.random_move
+      if (move == Point[N](-1)):
+        echo "\n------------------"
+        echo "No legal move left!"
+        break
+
+      echo "Next move: " & $move
+      echo "Empty set: " & $a.empty_points
+      echo "Empty set len: " & $a.empty_points.len
+
+      a.play(move)
+      a.next_player = a.next_player.opponent
+
+      inc counter
+      if counter >= 500:
+        break
+
   const N: int8 = 19
-  echo "\n###### board ######"
+  echo "\n###### Board ######"
   var a = newBoardState(N)
-  echo a.board
+  # echo a.board
 
   echo "\n###### Random simulations ######"
+  import times, os, strutils, strformat
 
-  var count: int
-  while a.empty_points.len > 0:
+  let arguments = commandLineParams()
+  let nb_iter = if arguments.len > 0: parseInt($arguments[0])
+                else: 100_000
 
-    echo "\n\n#############"
-    echo "Iteration #" & $count
-    echo a.board
+  let start = cpuTime()
+  for i in 0 ..< nb_iter:
+    a.simulate(i)
+  let stop = cpuTIme()
+  echo &"Took {stop - start}s for {nb_iter} simulations"
 
-    echo "Player: " & $a.next_player
 
-    let move = a.random_move
-    if move == Point[N](-1):
-      echo "\n------------------"
-      echo "No legal move left!"
-      break
-
-    echo "Next move: " & $move
-    echo "Empty set: " & $a.empty_points
-    echo "Empty set len: " & $a.empty_points.len
-
-    a.play(move)
-    a.next_player = a.next_player.opponent
-    inc count
-
-  echo a.board
 
 
 when false and isMainModule:
