@@ -152,7 +152,7 @@ const MaxNbMoves* = 512
 
 ################################ Go common logic ###################################
 
-iterator neighbors*[N: static[int8]](idx: Point[N]):Point[N] =
+iterator neighbors*[N: static[int8]](idx: Point[N]): Point[N] =
   yield Point[N] idx.int16 - 1
   yield Point[N] idx.int16 + 1
   yield Point[N] idx.int16 - (N+2)
@@ -206,9 +206,3 @@ genIndexers(Board, Point, Intersection)
 func `==`*(val1, val2: Point or GroupID): bool = val1.int16 == val2.int16
 
 ################# Strongly checked indexers and iterators ##########################
-
-
-when isMainModule:
-
-  var a: EmptyPoints[19]
-  echo a.sizeof

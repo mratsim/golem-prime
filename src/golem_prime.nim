@@ -82,6 +82,7 @@ when true and isMainModule:
   let start = cpuTime()
   for i in 0 ..< nb_iter:
     a.simulate(i)
+    # echo a.board
   let stop = cpuTIme()
   echo &"Took {stop - start}s for {nb_iter} simulations"
 
