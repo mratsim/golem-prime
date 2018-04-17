@@ -25,17 +25,9 @@ func reset_border*(self: var GroupMetadata) {.inline.} =
   sum_degree_vertices = high(uint16)
   nb_pseudo_libs = 4
   nb_stones = 0
-  debug_only:
-    color = Border
 
-iterator groupof*[N: static[int8]](self: BoardState, start_stone: Point[N]): Point[N] =
-  ## Iterates over the all the stones of the same group as the input
-
-  # Due to aliasing in "remove_from_lib" (nb_pseudo_libs can go negative)
-  # we can't pass the Board State and have to create a temporary g
-  # Benchmarking shows that this is costly in "_platform_memmove"
-
-  let next = self.groups.next_stones # Need to store state to prevent aliasing
+template groupof_impl(self: NextStones, start_stone: Point): untyped =
+  # Implementation of the groupof iterator
 
   yield start_stone
 
@@ -45,6 +37,18 @@ iterator groupof*[N: static[int8]](self: BoardState, start_stone: Point[N]): Poi
     while stone != start_stone:
       yield stone
       stone = next[stone]
+
+iterator groupof_noalias*[N: static[int8]](self: BoardState, start_stone: Point[N]): Point[N] =
+  ## Iterates over the all the stones of the same group as the input
+
+  let next = self.groups.next_stones # Need to store state to prevent aliasing
+  groupof_impl(next, start_stone)
+
+iterator groupof_alias*[N: static[int8]](self: BoardState, start_stone: Point[N]): Point[N] =
+  ## Iterates over the all the stones of the same group as the input
+
+  groupof_impl(self.groups.next_stones, start_stone)
+
 
 func add_as_lib*(self: var GroupMetadata, point: Point) {.inline.} =
   ## Add an adjacent point as a liberty to a group
@@ -62,8 +66,6 @@ func merge*(self: var GroupsMetaPool, g1, g2: GroupID) =
   ## Merge the metadata of the groups of 2 stones
   ## This does not clear leftover metadata
   assert g1 != g2
-  debug_only:
-    assert self[g1].color == self[g2].color
 
   self[g1].sum_square_degree_vertices += self[g2].sum_square_degree_vertices
   self[g1].sum_degree_vertices        += self[g2].sum_degree_vertices

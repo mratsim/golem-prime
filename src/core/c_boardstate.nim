@@ -22,7 +22,7 @@ func group_next[N: static[int8]](self: BoardState[N], point: Point[N]): var Poin
   self.groups.next_stones[point]
 
 ########## Group liberties ##########
-import sequtils
+
 func add_neighboring_libs(self: BoardState, point: Point) =
   ## Update groups metadata with liberties adjacent from a point
   for neighbor in point.neighbors:
@@ -46,8 +46,6 @@ func singleton[N: static[int8]](self: BoardState[N], color: range[Empty..White],
   self.group_next(point) = point
 
   self.group(point).reset_meta()
-  debug_only:
-    self.group(point).color = color
   inc self.group(point).nb_stones
 
   self.add_neighboring_libs point
@@ -176,7 +174,7 @@ func merge_with_groups*(self: BoardState, color: Player, point: Point) =
       self.groups.metadata.merge(max_group_id, group_neighbor)
 
       # Path compression: rattach all stones from smallest group to the bigger group
-      for stone in self.groupof(neighbor):
+      for stone in self.groupof_noalias(neighbor):
         self.group_id(stone) = max_group_id
 
       # Concatenate the linked rings listing stones in each group.
@@ -190,7 +188,7 @@ func remove_group(self: BoardState, point: Point) =
 
   let removed_group = self.group_id(point)
 
-  for stone in self.groupof(point):
+  for stone in self.groupof_noalias(point):
     self.remove_stone stone
 
     # Update liberties of neighboring groups

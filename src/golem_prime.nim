@@ -25,7 +25,10 @@ when isMainModule:
     a1.next_player()
 
   a1.reset()
-  doAssert a0.groups == a1.groups
+
+  doAssert a0.groups.next_stones == a1.groups.next_stones
+  doAssert a0.groups.id == a1.groups.id
+  doAssert a0.groups.metadata == a1.groups.metadata
   doAssert a0.board == a1.board
   doAssert a0.empty_points == a1.empty_points
   doAssert a0.nb_black_stones == a1.nb_black_stones
