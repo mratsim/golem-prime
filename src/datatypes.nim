@@ -9,12 +9,12 @@
 
 type
   ################################ Coordinates ###################################
-  GoInt* = int16    # Easily switch the base int type for perf testing. 2 concerns are competing:
+  GoInt* = int32    # Easily switch the base int type for perf testing. 2 concerns are competing:
                     #  - native word size so that there is no zero-extend/convert for register moves and array accesses
                     #  - Cache locality: If data can stay in L1 cache it's much better and smaller data: easier to move.
                     # Should be int16 minimum (int8/uint8 can only represent 128/256 values)
   GoInt2* = uint32  # We use graph theory "Sum of square of vertex degrees" to speedily determine atari
-                    # Should be int32 minimum
+                    # Should be uint32 or int64 minimum (rollover is fine)
 
   GoNatural* = range[0.GoInt .. high(GoInt)]
   GoNatural2* = range[0.GoInt2 .. high(GoInt2)]

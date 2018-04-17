@@ -12,7 +12,7 @@ when defined(march_native):
   {.passC:"-march=native".}
 
 when isMainModule:
-  const Size: GoInt = 19
+  const Size: GoInt = 9
 
   # Sanity check: Position conversion
   doAssert $pos("D4", Size) == "D4"
@@ -90,11 +90,13 @@ when true and isMainModule:
   let elapsed = stop - start
   echo &"Took {elapsed}s for {nb_iter} simulations: {(nb_iter.float / (1000 * elapsed)):3} kpps (K playouts/s)"
 
-  # Bench: about 14.5~15.5 kpps on a i5-5257U mobile dual core (2.7 Ghz, turbo 3.1)
-  # 19x19  Note: this is without scoring and MCTS, just naive random playouts
+  # Bench: about 16.5 kpps on a i5-5257U mobile dual core (Broadwell 2.7 Ghz, turbo 3.1)
+  # 19x19  with int32 base type.
+  #        Note: this is without scoring and MCTS, just naive random playouts
 
-  # Bench: about 50 kpps on a i5-5257U mobile dual core (2.7 Ghz, turbo 3.1)
-  #   9x9  Note: this is without scoring and MCTS, just naive random playouts
+  # Bench: about 58 kpps on a i5-5257U mobile dual core (2.7 Ghz, turbo 3.1)
+  #   9x9  with int32 base type
+  #        Note: this is without scoring and MCTS, just naive random playouts
 
 when false and isMainModule:
   const N: GoInt = 19
