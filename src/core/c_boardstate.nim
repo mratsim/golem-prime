@@ -28,9 +28,6 @@ func add_neighboring_libs(self: BoardState, point: Point) =
   for neighbor in point.neighbors:
     {.unroll: 4.}
     if self.board[neighbor] == Empty:
-      debugecho "\nPoint: " & $point
-      debugecho "GroupID: " & $self.group_id(point).int16
-      debugecho "Group: " & $self.group(point)
       self.group(point).add_as_lib neighbor
 
 func remove_from_neighbors_libs*(self: BoardState, point: Point) =

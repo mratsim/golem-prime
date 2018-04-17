@@ -12,8 +12,20 @@ when defined(march_native):
   {.passC:"-march=native".}
 
 when isMainModule:
-  # Sanity check:
+  # Sanity check: Position conversion
   doAssert $pos("D4", 19'i8) == "D4"
+
+  # Sanity check: Reset fully reset
+  let a0 = newBoardState(19'i8)
+  var a1 = newBoardState(19'i8)
+
+  for _ in 0 ..< 100:
+    let move = a1.random_move
+    a1.play(move)
+    a1.next_player()
+
+  a1.reset()
+  doAssert a0[] == a1[]
 
 when true and isMainModule:
 
@@ -22,33 +34,33 @@ when true and isMainModule:
   proc simulate[N: static[int8]](a: BoardState[N], simulation_id: int) =
     a.reset()
 
-    echo a.groups.repr
+    # echo a.groups.repr
 
-    # var counter: int
-    # while a.empty_points.len > 0:
+    var counter: int
+    while a.empty_points.len > 0:
 
-    #   echo "\n\n#############"
-    #   echo &"Simulation.Iteration #{simulation_id}.{counter}"
-    #   echo a.board
+      echo "\n\n#############"
+      echo &"Simulation.Iteration #{simulation_id}.{counter}"
+      echo a.board
 
-    #   echo "Player: " & $a.to_move
+      echo "Player: " & $a.to_move
 
-    #   let move = a.random_move
-    #   if (move == Point[N](-1)):
-    #     echo "\n------------------"
-    #     echo "No legal move left!"
-    #     break
+      let move = a.random_move
+      if (move == Point[N](-1)):
+        echo "\n------------------"
+        echo "No legal move left!"
+        break
 
-    #   echo "Next move: " & $move
-    #   echo "Empty set: " & $a.empty_points
-    #   echo "Empty set len: " & $a.empty_points.len
+      echo "Next move: " & $move
+      echo "Empty set: " & $a.empty_points
+      echo "Empty set len: " & $a.empty_points.len
 
-    #   a.play(move)
-    #   a.next_player()
+      a.play(move)
+      a.next_player()
 
-    #   inc counter
-    #   if counter >= 500:
-    #     break
+      inc counter
+      if counter >= 500:
+        break
 
   echo "\n###### Board ######"
   var a = newBoardState(N)
