@@ -33,6 +33,10 @@ func reset_border*(self: var GroupMetadata) {.inline.} =
 iterator groupof*[N: static[int8]](g: Groups[N], start_stone: Point[N]): Point[N] =
   ## Iterates over the all the stones of the same group as the input
 
+  # Due to aliasing in "remove_from_lib" (nb_pseudo_libs can go negative)
+  # we can't pass the Board State and have to create a temporary g
+  # Benchmarking shows that this is costly in "_platform_memmove"
+
   yield start_stone
 
   var stone = g.next_stones[start_stone]
@@ -54,7 +58,7 @@ func remove_from_lib*(self: var GroupMetadata, point: Point) {.inline.} =
   self.sum_degree_vertices -= point.uint16
   self.sum_square_degree_vertices -= point.uint32 * point.uint32
 
-func merge*(self: var GroupsMetaPool, g1, g2: GroupID) {.inline.}=
+func merge*(self: var GroupsMetaPool, g1, g2: GroupID) =
   ## Merge the metadata of the groups of 2 stones
   ## This does not clear leftover metadata
   assert g1 != g2
