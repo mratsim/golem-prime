@@ -26,7 +26,6 @@ func group_next[N: static[GoInt]](self: BoardState[N], point: Point[N]): var Poi
 func add_neighboring_libs(self: BoardState, point: Point) =
   ## Update groups metadata with liberties adjacent from a point
   for neighbor in point.neighbors:
-    {.unroll: 4.}
     if self.board[neighbor] == Empty:
       self.group(point).add_as_lib neighbor
 
@@ -118,7 +117,6 @@ proc remove_stone(self: BoardState, point: Point) {.inline.}=
 func is_opponent_eye*(self: BoardState, color: Player, point: Point): bool =
   ## Returns true if a stone would be in the opponent eye.
   for neighbor in point.neighbors:
-    {.unroll: 4.}
     let color_neighbor = self.board[neighbor]
     if color_neighbor in {Intersection color, Empty}:
       return false
@@ -148,7 +146,6 @@ func merge_with_groups*(self: BoardState, color: Player, point: Point) =
     max_neighbor: Point
 
   for neighbor in point.neighbors:
-    {.unroll: 4.}
     if self.board[neighbor] == color:
       let neighbor_stones = self.group(neighbor).nb_stones
       if neighbor_stones > max_nb_stones:
@@ -166,7 +163,6 @@ func merge_with_groups*(self: BoardState, color: Player, point: Point) =
 
   # If there are 2 groups or more of the same color that become connected
   for neighbor in point.neighbors:
-    {.unroll: 4.} # TODO when unroll pragma is effective check code N and cache effect.
     let group_neighbor = self.group_id(neighbor)
     if self.board[neighbor] == color and group_neighbor != max_group_id:
 
@@ -174,7 +170,7 @@ func merge_with_groups*(self: BoardState, color: Player, point: Point) =
       self.groups.metadata.merge(max_group_id, group_neighbor)
 
       # Path compression: rattach all stones from smallest group to the bigger group
-      for stone in self.groupof_alias(neighbor):
+      for stone in self.groupof(neighbor):
         self.group_id(stone) = max_group_id
 
       # Concatenate the linked rings listing stones in each group.
@@ -188,7 +184,7 @@ func remove_group(self: BoardState, point: Point) =
 
   let removed_group = self.group_id(point)
 
-  for stone in self.groupof_noalias(point):
+  for stone in self.groupof(point):
     self.remove_stone stone
 
     # Update liberties of neighboring groups

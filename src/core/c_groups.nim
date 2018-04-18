@@ -26,29 +26,23 @@ func reset_border*(self: var GroupMetadata) {.inline.} =
   nb_pseudo_libs = 4.GoInt
   nb_stones = 0.GoInt
 
-template groupof_impl(self: NextStones, start_stone: Point): untyped =
-  # Implementation of the groupof iterator
-
-  yield start_stone
-
-  var stone = self[start_stone]
-
-  if stone != Point[N](-1):
-    while stone != start_stone:
-      yield stone
-      stone = self[stone]
-
-iterator groupof_noalias*[N: static[GoInt]](self: BoardState, start_stone: Point[N]): Point[N] =
+iterator groupof*[N: static[GoInt]](self: BoardState, start_stone: Point[N]): Point[N] =
   ## Iterates over the all the stones of the same group as the input
 
-  let next = self.groups.next_stones # Need to store state to prevent aliasing
-  groupof_impl(next, start_stone)
+  assert start_stone != Point[N](-1)
 
-iterator groupof_alias*[N: static[GoInt]](self: BoardState, start_stone: Point[N]): Point[N] =
-  ## Iterates over the all the stones of the same group as the input
+  # We need to store the next stone too before yielding,
+  # to deal with iterator aliasing in remove_group
+  var
+    current = start_stone
+    next = self.groups.next_stones[current]
 
-  groupof_impl(self.groups.next_stones, start_stone)
-
+  while true:
+    yield current
+    current = next
+    if current == start_stone:
+      break
+    next = self.groups.next_stones[current]
 
 func add_as_lib*(self: var GroupMetadata, point: Point) {.inline.} =
   ## Add an adjacent point as a liberty to a group
@@ -62,7 +56,7 @@ func remove_from_lib*(self: var GroupMetadata, point: Point) {.inline.} =
   self.sum_degree_vertices -= point.GoInt
   self.sum_square_degree_vertices -= point.GoInt2 * point.GoInt2
 
-func merge*(self: var GroupsMetaPool, g1, g2: GroupID) =
+func merge*(self: var GroupsMetaPool, g1, g2: GroupID) {.inline.}=
   ## Merge the metadata of the groups of 2 stones
   ## This does not clear leftover metadata
   assert g1 != g2

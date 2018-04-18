@@ -12,7 +12,7 @@ when defined(march_native):
   {.passC:"-march=native".}
 
 when isMainModule:
-  const Size: GoInt = 9
+  const Size: GoInt = 19
 
   # Sanity check: Position conversion
   doAssert $pos("D4", Size) == "D4"
