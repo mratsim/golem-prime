@@ -83,6 +83,11 @@ func is_dead*(self: GroupMetadata): bool {.inline.}=
   nb_pseudo_libs == 0.GoInt
 
 func is_in_atari*(self: GroupMetadata): bool {.inline.}=
+  # Graph theory
+  # To detect atari we use the inequality that if we have n liberties: ∑(liberties²)/n ≤ (∑liberties)².
+  # Equality only if each liberty is the same (contributed by the same point).
+  # See: https://web.archive.org/web/20090404040318/http://computer-go.org/pipermail/computer-go/2007-November/012350.html
+  #
   nb_pseudo_libs.GoInt2 * sum_square_degree_vertices == sum_degree_vertices.GoInt2 * sum_degree_vertices.GoInt2
 
 ################# Liberties  ##########################
