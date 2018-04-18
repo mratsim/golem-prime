@@ -8,19 +8,6 @@ import
 
 {.this: self.} # TODO: this does not work with static - https://github.com/nim-lang/Nim/issues/7618
 
-########## Iteration and group accessors ##########
-# Those operations are done at the board level to avoid double indirection
-# when checking the color of the neighboring stones.
-
-func group_id*[N: static[GoInt]](self: BoardState[N], point: Point[N]): var GroupID[N] {.inline.}=
-  self.groups.id[point]
-
-func group*(self: BoardState, point: Point): var GroupMetadata {.inline.}=
-  self.groups.metadata[self.groups.id[point]]
-
-func group_next[N: static[GoInt]](self: BoardState[N], point: Point[N]): var Point[N] {.inline.}=
-  self.groups.next_stones[point]
-
 ########## Group liberties ##########
 
 func add_neighboring_libs(self: BoardState, point: Point) =
@@ -86,7 +73,7 @@ func newBoardState*(size: static[GoInt]): BoardState[size] =
 
 ########## Board operations on stones ##########
 
-proc place_stone*(self: BoardState, color: Player, point: Point) {.inline.}=
+proc place_stone*(self: BoardState, point: Point, color: Player) {.inline.}=
   ## Place a stone at a specified position
   ## This only updates board state metadata
   ## And does not trigger groups/stones related life & death computation
@@ -114,11 +101,11 @@ proc remove_stone(self: BoardState, point: Point) {.inline.}=
   self.board[point] = Empty
   self.singleton Empty, point
 
-func is_opponent_eye*(self: BoardState, color: Player, point: Point): bool =
+func is_opponent_eye*(self: BoardState, point: Point, player: Player): bool =
   ## Returns true if a stone would be in the opponent eye.
   for neighbor in point.neighbors:
     let color_neighbor = self.board[neighbor]
-    if color_neighbor in {Intersection color, Empty}:
+    if color_neighbor in {Intersection player, Empty}:
       return false
   return true
 
@@ -136,7 +123,7 @@ func add_to_group(self: BoardState, point, group_repr: Point) =
 
   self.add_neighboring_libs point
 
-func merge_with_groups*(self: BoardState, color: Player, point: Point) =
+func merge_with_groups*(self: BoardState, point: Point, color: Player) =
   ## Merge a new stone with surrounding stones of the same color.
   ## Create a new group if it is standalone
 
@@ -192,7 +179,7 @@ func remove_group(self: BoardState, point: Point) =
       if (group_id(self, neighbor) != removed_group) or self.board[neighbor] == Empty:
         self.group(neighbor).add_as_lib stone
 
-func capture_deads_around*(self: BoardState, color: Player, point: Point) =
+func capture_deads_around*(self: BoardState, point: Point, color: Player) =
   ## Capture dead group around a stone
 
   let color_opponent = color.opponent

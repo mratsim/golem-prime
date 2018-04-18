@@ -4,7 +4,8 @@
 
 import
   ./datatypes,
-  ./core/[c_boardstate, c_conversion, c_move]
+  ./core/[c_boardstate, c_conversion],
+  ./move_heuristics/m_move
 
 # Note: Golem Prime accepts a random seed parameter for reproducibily.
 #       Compile it with -d:random_seed=1234 to set the random seed to 1234

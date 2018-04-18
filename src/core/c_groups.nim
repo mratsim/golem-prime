@@ -6,6 +6,9 @@ import
   ../datatypes
 
 {.this:self.}
+
+################# Initialization ######################
+
 func reset_members*[N: static[GoInt]](groups: var Groups[N]) =
   for idx, group_id in mpairs(groups.id):
     group_id = GroupID[N](idx)
@@ -26,6 +29,10 @@ func reset_border*(self: var GroupMetadata) {.inline.} =
   nb_pseudo_libs = 4.GoInt
   nb_stones = 0.GoInt
 
+################# Initialization ######################
+
+########## Iteration and group accessors ##############
+
 iterator groupof*[N: static[GoInt]](self: BoardState, start_stone: Point[N]): Point[N] =
   ## Iterates over the all the stones of the same group as the input
 
@@ -44,6 +51,22 @@ iterator groupof*[N: static[GoInt]](self: BoardState, start_stone: Point[N]): Po
       break
     next = self.groups.next_stones[current]
 
+# Those operations are done at the board level to avoid double indirection
+# when checking the color of the neighboring stones.
+
+func group_id*[N: static[GoInt]](self: BoardState[N], point: Point[N]): var GroupID[N] {.inline.}=
+  self.groups.id[point]
+
+func group*(self: BoardState, point: Point): var GroupMetadata {.inline.}=
+  self.groups.metadata[self.groups.id[point]]
+
+func group_next*[N: static[GoInt]](self: BoardState[N], point: Point[N]): var Point[N] {.inline.}=
+  self.groups.next_stones[point]
+
+########## Iteration and group accessors ##############
+
+################# Liberties  ##########################
+
 func add_as_lib*(self: var GroupMetadata, point: Point) {.inline.} =
   ## Add an adjacent point as a liberty to a group
   inc self.nb_pseudo_libs
@@ -55,6 +78,16 @@ func remove_from_lib*(self: var GroupMetadata, point: Point) {.inline.} =
   dec self.nb_pseudo_libs
   self.sum_degree_vertices -= point.GoInt
   self.sum_square_degree_vertices -= point.GoInt2 * point.GoInt2
+
+func is_dead*(self: GroupMetadata): bool {.inline.}=
+  nb_pseudo_libs == 0.GoInt
+
+func is_in_atari*(self: GroupMetadata): bool {.inline.}=
+  nb_pseudo_libs.GoInt2 * sum_square_degree_vertices == sum_degree_vertices.GoInt2 * sum_degree_vertices.GoInt2
+
+################# Liberties  ##########################
+
+################## Merging  ###########################
 
 func merge*(self: var GroupsMetaPool, g1, g2: GroupID) {.inline.}=
   ## Merge the metadata of the groups of 2 stones
@@ -70,8 +103,4 @@ func concat*(self: var NextStones, p1, p2: Point) {.inline.}=
   ## Concatenate the lists of stones in the groups of p1 and p2
   swap(self[p1], self[p2])
 
-func is_dead*(self: GroupMetadata): bool {.inline.}=
-  nb_pseudo_libs == 0.GoInt
-
-func is_in_atari*(self: GroupMetadata): bool {.inline.}=
-  nb_pseudo_libs.GoInt2 * sum_square_degree_vertices == sum_degree_vertices.GoInt2 * sum_degree_vertices.GoInt2
+################## Merging  ###########################

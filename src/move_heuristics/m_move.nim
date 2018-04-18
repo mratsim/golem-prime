@@ -3,8 +3,9 @@
 # (license terms are at https://www.apache.org/licenses/LICENSE-2.0).
 
 import
-  ../datatypes, ./c_boardstate, ./c_empty_points, ./c_groups,
-  ../heuristics/h_filling_eye,
+  ../datatypes,
+  ../core/core,
+  ./h_filling_eye,
   random
 
 # Random seed setting for reproducibility
@@ -21,18 +22,18 @@ proc pick_idx[N: static[GoInt]](s: EmptyPoints[N]): EmptyIdx[N] {.inline.}=
   ## and produces high quality random numbers
   rand(0.GoInt .. GoInt(s.len-1))
 
-func play*[N: static[GoInt]](self: BoardState[N], point: Point[N], color: Player) =
+func play*[N: static[GoInt]](self: BoardState[N], point: Point[N], player: Player) =
   ## Play a stone
   ## Move is assumed valid. Illegality should be checked beforehand
 
   let
-    potential_ko = self.is_opponent_eye(color, point)
+    potential_ko = self.is_opponent_eye(point, player)
     prev_len_empty_points = self.empty_points.len
 
-  self.merge_with_groups           color, point
-  self.place_stone                 color, point
-  self.remove_from_neighbors_libs         point
-  self.capture_deads_around        color, point
+  self.merge_with_groups           point, player
+  self.place_stone                 point, player
+  self.remove_from_neighbors_libs  point
+  self.capture_deads_around        point, player
 
   self.ko_pos = if potential_ko and prev_len_empty_points == self.empty_points.len:
                   self.empty_points.peek
@@ -41,8 +42,10 @@ func play*[N: static[GoInt]](self: BoardState[N], point: Point[N], color: Player
 func play*[N: static[GoInt]](self: BoardState[N], point: Point[N]) {.inline.}=
   self.play point, self.to_move
 
-func surrounded_but_legal(self: BoardState, point: Point, player: Player, opponent: Player): bool =
+func surrounded_but_legal(self: BoardState, point: Point, player: Player): bool =
   # Check if playing a stone in a surrounded space is legal
+
+  let opponent = player.opponent
 
   for neighbor in point.neighbors:
     # We track liberties of empty spaces.
@@ -60,6 +63,14 @@ func is_legalish_move[N: static[GoInt]](self: BoardState[N], point: Point[N], pl
   ## This does not check for superko for efficiency reason.
   ## They are very rare and we can just take the second best move
   ## if it comes to that.
+
+  # Optimization note: "dont_fill_own_true_eye" and "surrounded_but_legal"
+  # reloads the opponent player. It might be more efficient to store it here but:
+  #   - Value is a small, and loaded from a constant array.
+  #   - Opponent array is likely to be in cache
+  #   - Memory latency can be hidden by a non-blocking load
+  #   - One less parameter passed = 1 more register available
+  #   - Benchmark is inconclusive
 
   assert point != Point[N](-1), "-1 is is not a real board position."
   assert self.board[point] == Empty, $point & " is already occupied by a " & $self.board[point] &
@@ -83,25 +94,20 @@ func is_legalish_move[N: static[GoInt]](self: BoardState[N], point: Point[N], pl
   #   - playing in an eye with no enemy stone in atari.
   #   - suicide (dame/false eye was the last liberty of a group)
 
-  let opponent = player.opponent
-
   # 1. Basic heuristic (don't fill your own eye).
   #    Note: it is tuned to provide as less bias and blind spots
   #    as possible (i.e. if filling eye is a good move, it should be considered)
 
-  if dont_fill_own_true_eye(self, point, player, opponent):
+  if dont_fill_own_true_eye(self, point, player):
     return false
 
   # 2. Check out for illegal moves
-  if surrounded_but_legal(self, point, player, opponent):
+  if surrounded_but_legal(self, point, player):
     return true
 
   return false # Opponent's true eye or filling the dame will suicide.
 
-func is_legalish_move[N: static[GoInt]](self: BoardState[N], point: Point[N]) {.inline.}=
-  self.is_legalish_move point self.to_move
-
-proc random_move*[N: static[GoInt]](self: BoardState[N], color: Player): Point[N] =
+proc random_move*[N: static[GoInt]](self: BoardState[N], player: Player): Point[N] =
 
   assert self.empty_points.len > 0, "It seems like the whole board is completely full of stones, " &
     "not even eyes are left. Are you playing go?"
@@ -111,7 +117,7 @@ proc random_move*[N: static[GoInt]](self: BoardState[N], color: Player): Point[N
 
   while true:
     result = self.empty_points.list[candidate_idx]
-    if self.is_legalish_move(result, color):
+    if self.is_legalish_move(result, player):
       return
 
     inc candidate_idx

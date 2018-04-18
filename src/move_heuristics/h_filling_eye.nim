@@ -117,15 +117,17 @@
 
 
 import
-  ../datatypes, ../core/c_boardstate
+  ../datatypes, ../core/core
 
-func dont_fill_own_true_eye*[N: static[GoInt]](self: BoardState[N], point: Point[N], player, opponent: Player): bool =
+func dont_fill_own_true_eye*[N: static[GoInt]](self: BoardState[N], point: Point[N], player: Player): bool =
   ## Prevent filling true eye if resulting group would be 6 stones or more
   ## Compared to regular "Don't fill your own eye" this should prevent blind spots
   ## where filling your own eye is actually a good move, while costing low simulation time.
 
   assert (self.board[point] == Empty) and self.group(point).nb_pseudo_libs == 0, "This proc " &
     "is only valid for a completely surrounded empty space"
+
+  let opponent = player.opponent
 
   # 1. Confirm if around is friend and foe
   # At the same time we count the number of stones in friendly groups
