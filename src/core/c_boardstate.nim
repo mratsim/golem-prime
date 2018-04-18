@@ -12,7 +12,7 @@ import
 # Those operations are done at the board level to avoid double indirection
 # when checking the color of the neighboring stones.
 
-func group_id[N: static[GoInt]](self: BoardState[N], point: Point[N]): var GroupID[N] {.inline.}=
+func group_id*[N: static[GoInt]](self: BoardState[N], point: Point[N]): var GroupID[N] {.inline.}=
   self.groups.id[point]
 
 func group*(self: BoardState, point: Point): var GroupMetadata {.inline.}=
@@ -80,7 +80,7 @@ func reset*[N: static[GoInt]](self: BoardState[N]) =
     if stone == Empty:
       self.add_neighboring_libs Point[N](idx)
 
-func newBoardState*(size: static[GoInt]): BoardState[size] {.inline.} =
+func newBoardState*(size: static[GoInt]): BoardState[size] =
   new result
   result.reset()
 

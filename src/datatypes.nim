@@ -151,10 +151,16 @@ const MaxNbMoves* = 512
 ################################ Go common logic ###################################
 
 iterator neighbors*[N: static[GoInt]](idx: Point[N]): Point[N] =
-  yield Point[N] idx.GoInt - 1
-  yield Point[N] idx.GoInt + 1
-  yield Point[N] idx.GoInt - (N+2)
-  yield Point[N] idx.GoInt + (N+2)
+  yield Point[N] idx.GoInt - 1     # left
+  yield Point[N] idx.GoInt + 1     # right
+  yield Point[N] idx.GoInt - (N+2) # up
+  yield Point[N] idx.GoInt + (N+2) # down
+
+iterator diag_neighbors*[N: static[GoInt]](idx: Point[N]): Point[N] =
+  yield Point[N] idx.GoInt - (N+2) - 1 # upper-left
+  yield Point[N] idx.GoInt - (N+2) + 1 # upper-right
+  yield Point[N] idx.GoInt + (N+2) - 1 # bottom-left
+  yield Point[N] idx.GoInt + (N+2) + 1 # bottom-right
 
 const opponents: array[Player, Player] = [
   Black: Player White,

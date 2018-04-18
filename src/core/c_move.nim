@@ -4,6 +4,7 @@
 
 import
   ../datatypes, ./c_boardstate, ./c_empty_points, ./c_groups,
+  ../heuristics/h_filling_eye,
   random
 
 # Random seed setting for reproducibility
@@ -40,16 +41,31 @@ func play*[N: static[GoInt]](self: BoardState[N], point: Point[N], color: Player
 func play*[N: static[GoInt]](self: BoardState[N], point: Point[N]) {.inline.}=
   self.play point, self.to_move
 
-func is_legalish_move[N: static[GoInt]](self: BoardState[N], point: Point[N], color: Player): bool =
+func surrounded_but_legal(self: BoardState, point: Point, player: Player, opponent: Player): bool =
+  # Check if playing a stone in a surrounded space is legal
+
+  for neighbor in point.neighbors:
+    # We track liberties of empty spaces.
+    let neighbor_in_atari = self.group(neighbor).is_in_atari
+
+    # 1. False eye in atari from opponent
+    # 2. Dame: we connect to a friendly group with a liberty elsewhere
+    if  ((self.board[neighbor] == opponent) and neighbor_in_atari) or
+        ((self.board[neighbor] == player) and not neighbor_in_atari):
+      return true
+  return false
+
+func is_legalish_move[N: static[GoInt]](self: BoardState[N], point: Point[N], player: Player): bool =
   ## Check if a move looks legal
   ## This does not check for superko for efficiency reason.
   ## They are very rare and we can just take the second best move
   ## if it comes to that.
 
   assert point != Point[N](-1), "-1 is is not a real board position."
-
   assert self.board[point] == Empty, $point & " is already occupied by a " & $self.board[point] &
     " stone. This shouldn't happen."
+
+  # 0. Rapid checks
 
   if point == self.ko_pos:
     return false
@@ -67,18 +83,19 @@ func is_legalish_move[N: static[GoInt]](self: BoardState[N], point: Point[N], co
   #   - playing in an eye with no enemy stone in atari.
   #   - suicide (dame/false eye was the last liberty of a group)
 
-  let color_opponent = color.opponent
+  let opponent = player.opponent
 
-  for neighbor in point.neighbors:
+  # 1. Basic heuristic (don't fill your own eye).
+  #    Note: it is tuned to provide as less bias and blind spots
+  #    as possible (i.e. if filling eye is a good move, it should be considered)
 
-    # We track liberties of empty spaces.
-    let neighbor_in_atari = self.group(neighbor).is_in_atari
+  if dont_fill_own_true_eye(self, point, player, opponent):
+    return false
 
-    # 1. False eye in atari from opponent
-    # 2. Dame: we connect to a friendly group with a liberty elsewhere
-    if  ((self.board[neighbor] == color_opponent) and neighbor_in_atari) or
-        ((self.board[neighbor] == color) and not neighbor_in_atari):
-      return true
+  # 2. Check out for illegal moves
+  if surrounded_but_legal(self, point, player, opponent):
+    return true
+
   return false # Opponent's true eye or filling the dame will suicide.
 
 func is_legalish_move[N: static[GoInt]](self: BoardState[N], point: Point[N]) {.inline.}=
