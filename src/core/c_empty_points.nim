@@ -58,3 +58,9 @@ func excl*(s: var EmptyPoints, point: Point) {.inline.} =
 
   when compileOption("boundChecks"):
     s.indices[point.GoInt] = -1       # Now we erase last value (take care of border case when we remove last value)
+
+iterator items*[N: static[GoInt]](s: EmptyPoints[N]): Point[N] =
+  ## Iterates over the empty points
+
+  for i in 0 ..< s.len:
+    yield s.list[i]

@@ -186,3 +186,30 @@ func capture_deads_around*(self: BoardState, point: Point, color: Player) =
   for neighbor in point.neighbors:
     if self.board[neighbor] == color_opponent and self.group(neighbor).isDead:
       self.remove_group neighbor
+
+########## End game ##########
+
+func black_score*[N: static[GoInt]](self: BoardState[N]): GoInt =
+  # Returns the score using chinese rules.
+  # Score is positive if black wins, negative if white wins.
+
+  # let nb_white_stones = N*N - self.nb_black_stones - self.empty_points.len
+  result = 2.GoInt * self.nb_black_stones - N*N + self.empty_points.len
+
+  for empty_p in items(self.empty_points):
+    var black, white: GoInt
+
+    for neighbor in empty_p.neighbors:
+      let color = self.board[neighbor]
+
+      case color:
+      of Black: inc black
+      of White: inc white
+      else:
+        inc black
+        inc white
+
+      if black == 4:
+        inc result
+      elif white == 4:
+        dec result
