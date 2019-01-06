@@ -85,8 +85,8 @@ when true and isMainModule:
   let start = cpuTime()
   for i in 0 ..< nb_iter:
     a.simulate(i)
-    echo a.board
-    echo a.black_score
+    # echo a.board
+    # echo a.black_score
   let stop = cpuTIme()
 
   let elapsed = stop - start

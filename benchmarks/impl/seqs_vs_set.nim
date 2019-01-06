@@ -72,12 +72,12 @@ proc initIndices(): array[SizeSquare - ItemsToKeep, int16] {.noInit.}=
   for i, v in result.mpairs:
     v = tmp[i]
 
-proc removeSetP[N: static[GoInt]](s: var SetPoints, indices: array[N, int16]) =
+proc removeSetP[N: static int](s: var SetPoints, indices: array[N, int16]) =
 
   for idx in indices:
     s.excl idx
 
-proc removeSeqP[N: static[GoInt]](s: var SeqPoints, indices: array[N, int16]) =
+proc removeSeqP[N: static int](s: var SeqPoints, indices: array[N, int16]) =
 
   for idx in indices:
     s.del idx
