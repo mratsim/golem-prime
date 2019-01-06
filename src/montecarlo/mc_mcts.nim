@@ -85,12 +85,12 @@ func best_move[N: static[GoInt]](self: Node[N], nodes: NodeTable[N]): PosHash[N]
       result = child
       max_visits = nb_plays
 
-func expand_node(self: var MCTS_Context, board_state: BoardState,
-                parent_node: var Node, parent_hash: Zobrist) =
+func expand_node[N: static[GoInt]](self: var MCTS_Context[N], board_state: BoardState[N],
+                parent_node: var Node[N], parent_hash: Zobrist) =
 
   let opponent: Player = parent_node.to_play.opponent
 
-  var bstate_copy: BoardState
+  var bstate_copy: BoardState[N]
 
   for move in items(board_state.empty_points):
     if is_legalish_move(board_state, move, opponent):
@@ -100,7 +100,7 @@ func expand_node(self: var MCTS_Context, board_state: BoardState,
       let child_hash = bstate_copy.board.hash
 
       self.nodes
-        .mgetOrPut(child_hash, Node(to_play: opponent)) # If child isn't in the table add it
+        .mgetOrPut(child_hash, Node[N](to_play: opponent)) # If child isn't in the table add it
         .parents.add parent_hash                        # Add the input hash as a parent
 
       # Add as the child to input
@@ -108,7 +108,10 @@ func expand_node(self: var MCTS_Context, board_state: BoardState,
 
       # TODO: Setting priors
 
-func run_rollout[N: static[GoInt]](board_state: BoardState[N], self: var MCTS_Context[N], root_hash: Zobrist) =
+proc run_rollout[N: static[GoInt]](
+        self: var MCTS_Context[N],
+        board_state: BoardState[N],
+        root_hash: Zobrist) =
 
   # Track who played at each point first for AMAF (All moves as first) heuristic
   var
@@ -131,8 +134,8 @@ func run_rollout[N: static[GoInt]](board_state: BoardState[N], self: var MCTS_Co
       board_state.play(promising_move)
 
       # Update AMAF
-      if amaf_color_map[promising_move.GoInt] == Empty:
-        amaf_color_map[promising_move.GoInt] = node.to_play
+      # if amaf_color_map[promising_move.GoInt] == Empty:
+      #   amaf_color_map[promising_move.GoInt] = node.to_play
 
       # TODO: virtual loss
 
@@ -144,10 +147,10 @@ func run_rollout[N: static[GoInt]](board_state: BoardState[N], self: var MCTS_Co
 
     # 2. Expansion
     if (node.children.len == 0) and node.nb_plays > ExpansionThreshold:
-      self.expand_node(board_state, node, hash)
+      self.expand_node(board_state, node[], hash)
 
     # 3. Simulation
-    let black_wins = board_state.simulate(self.double_komi, amaf_color_map)
+    # let black_wins = board_state.simulate(self.double_komi, amaf_color_map)
 
     # 4. Backpropagation
     var update_nodes = @[hash] # TODO: reduce allocation
@@ -155,19 +158,19 @@ func run_rollout[N: static[GoInt]](board_state: BoardState[N], self: var MCTS_Co
       node = self.nodes[update_nodes.pop].addr
       update_nodes.add node.parents
 
-      let isWinningSide = black_wins xor (node.to_play == White)
+    #   let isWinningSide = black_wins xor (node.to_play == White)
 
-      inc node.num_plays
-      node.num_wins += GoInt isWinningSide
+      inc node.nb_plays
+    #   node.num_wins += GoInt isWinningSide
 
       # Update RAVE visits of child nodes
       for poshash in node.children:
         let child = self.nodes.mget(hash).addr
-        if amaf_color_map[poshash.point.GoInt] == child.to_play:
-          inc child.nb_rave_plays
-          child.nb_rave_wins += GoInt not isWinningSide # Children are the opposite player
+        # if amaf_color_map[poshash.position.GoInt] == child.to_play:
+        #   inc child.nb_rave_plays
+    #       child.nb_rave_wins += GoInt not isWinningSide # Children are the opposite player
 
-func search_best_move*[N: static[GoInt]](
+proc search_best_move*[N: static[GoInt]](
   self: var MCTS_Context[N], board_state: BoardState[N],
   nb_simulations: Natural): Point[N] =
 
@@ -185,19 +188,19 @@ func search_best_move*[N: static[GoInt]](
 
   let root_hash = simulstate.board.hash
 
-  var root = self.nodes.mgetOrPut(root_hash, Node[N](to_play: board_state.to_move)).addr
+  var root = self.nodes.mgetOrPut(root_hash, Node[N](to_play: board_state.to_move))
     # TODO: This is very unsafe, if the "nodes" table is too small
     #       expand_node will move the memory to grow the Table
     #       and node will point to nothing.
 
   if root.children.len == 0:
-    self.expand_node(board_state, root[], root_hash)
+    self.expand_node(board_state, root, root_hash)
 
   for i in 0 ..< nb_simulations:
     # TODO Error: cannot infer the value of the static param 'N'
     #   Only workaround is to use a static int, a static GoInt will trigger
     #   will trigger type mismatch down the line
-    # run_rollout(self, simulstate, root_hash)
+    run_rollout(self, simulstate, root_hash)
     deepCopy(simulstate, board_state)
 
   let (best_move, best_hash) = self.nodes[root_hash].best_move(self.nodes)
