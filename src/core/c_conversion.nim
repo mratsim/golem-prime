@@ -58,9 +58,8 @@ func `$`*[N: static[GoInt]](point: Point[N]): string {.inline.}=
 
   # This is unreachable with bounds checking dur to Coord range constraints
   if r notin {0.GoInt .. N - 1} or c notin {0.GoInt .. N - 1}:
-    result = &"Border({c+1}, {r+1})" # Border will be displayed with position 0 or N+1
-
-  result = $Cols[c+1] & $(N - r)
+    return &"Border({c+1}, {r+1})" # Border will be displayed with position 0 or N+1
+  return $Cols[c+1] & $(N - r)
 
 func `$`*[N: static[GoInt]](board: Board[N]): string =
   # Display a go board

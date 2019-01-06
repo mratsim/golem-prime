@@ -78,9 +78,9 @@ func best_child[N: static[GoInt]](self: Node[N], nodes: NodeTable[N]): PosHash[N
       result = poshash
 
 func best_move[N: static[GoInt]](self: Node[N], nodes: NodeTable[N]): PosHash[N] =
-  var max_visits: Natural
+  var max_visits: GoNatural2
   for child in self.children:
-    let nb_plays = self.nodes[child.hash].nb_plays
+    let nb_plays = nodes[child.hash].nb_plays
     if nb_plays > max_visits:
       result = child
       max_visits = nb_plays
@@ -108,7 +108,7 @@ func expand_node(self: var MCTS_Context, board_state: BoardState,
 
       # TODO: Setting priors
 
-func run_rollout[N: static[GoInt]](self: var MCTS_Context[N], board_state: BoardState[N], root_hash: Zobrist) =
+func run_rollout[N: static[GoInt]](board_state: BoardState[N], self: var MCTS_Context[N], root_hash: Zobrist) =
 
   # Track who played at each point first for AMAF (All moves as first) heuristic
   var
@@ -117,7 +117,7 @@ func run_rollout[N: static[GoInt]](self: var MCTS_Context[N], board_state: Board
 
   # Get a pointer to the node.
   # TODO: This is unsafe but there is nothing that will cause memory to move
-  let node = self.nodes.mget(hash).addr
+  var node = self.nodes.mget(hash).addr
 
   # 1. Selection: Descend the tree until we reach a leaf
   while not (node.children.len == 0):
@@ -197,7 +197,7 @@ func search_best_move*[N: static[GoInt]](
     # TODO Error: cannot infer the value of the static param 'N'
     #   Only workaround is to use a static int, a static GoInt will trigger
     #   will trigger type mismatch down the line
-    run_rollout[GoInt(19)](self, simulstate, root_hash)
+    # run_rollout(self, simulstate, root_hash)
     deepCopy(simulstate, board_state)
 
   let (best_move, best_hash) = self.nodes[root_hash].best_move(self.nodes)
