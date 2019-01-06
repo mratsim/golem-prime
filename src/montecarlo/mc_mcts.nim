@@ -118,6 +118,14 @@ proc run_rollout[N: static[GoInt]](
     amaf_color_map: array[(N+2)*(N+2), Intersection]
     hash = root_hash
 
+  # Comment this out and this compiles:
+  # "nim c -r -o:build/golem_prime src/golem_prime.nim"
+  echo amaf_color_map
+  # otherwise:
+  # datatypes.nim(96, 42) Error: cannot infer the value of the static param 'N'
+  # which correstonds to unrelated line
+  # Board*[N: static[GoInt]] = array[(N+2) * (N+2), Intersection]
+
   # Get a pointer to the node.
   # TODO: This is unsafe but there is nothing that will cause memory to move
   var node = self.nodes.mget(hash).addr
