@@ -5,7 +5,8 @@
 import
   ./datatypes,
   ./core/[c_boardstate, c_conversion],
-  ./move_heuristics/m_move
+  ./move_heuristics/m_move,
+  ./mc_datatypes, ./montecarlo/mc_mcts
 
 # Note: Golem Prime accepts a random seed parameter for reproducibily.
 #       Compile it with -d:random_seed=1234 to set the random seed to 1234
@@ -38,6 +39,34 @@ when isMainModule:
   doAssert a0.ko_pos == a1.ko_pos
   doAssert a0.to_move == a1.to_move
 
+when true and isMainModule:
+
+  echo "\n###### Board ######"
+  var a = newBoardState(Size)
+  echo a.board
+
+  var ctx = initMCTS_Context(7.5f, Size)
+
+  echo "\n###### Random simulations ######"
+  import times, os, strutils, strformat
+
+  let arguments = commandLineParams()
+  let nb_simulations =  if arguments.len > 0: parseInt($arguments[0])
+                        else: 1
+
+  # let start = cpuTime()
+
+  var move: Point[Size]
+  while move != Point[Size](-1):
+    echo a.board
+    echo $a.to_move & " to play"
+    move = ctx.search_best_move(a, nb_simulations)
+    echo "Will play the move: " & $move
+    a.play(move)
+    a.next_player()
+
+  echo "\nEnding position"
+  echo a.board
 
 when true and isMainModule:
   proc simulate[N: static[GoInt]](a: BoardState[N], simulation_id: int) =
@@ -100,7 +129,7 @@ when true and isMainModule:
   #   9x9  with int32 base type
   #        Note: this is without scoring and MCTS, just naive random playouts
 
-when false and isMainModule:
+when true and isMainModule:
   const N: GoInt = 19
   var a = newBoardState(N)
 

@@ -58,7 +58,7 @@ func surrounded_but_legal(self: BoardState, point: Point, player: Player): bool 
       return true
   return false
 
-func is_legalish_move[N: static[GoInt]](self: BoardState[N], point: Point[N], player: Player): bool =
+func is_legalish_move*[N: static[GoInt]](self: BoardState[N], point: Point[N], player: Player): bool =
   ## Check if a move looks legal
   ## This does not check for superko for efficiency reason.
   ## They are very rare and we can just take the second best move
@@ -130,3 +130,11 @@ proc random_move*[N: static[GoInt]](self: BoardState[N], player: Player): Point[
 
 proc random_move*[N: static[GoInt]](self: BoardState[N]): Point[N] {.inline.}=
   self.random_move self.to_move
+
+func are_legalish_moves_left*[N: static[GoInt]](self: BoardState[N]): bool =
+
+  for move in items(self.empty_points):
+    if self.is_legalish_move(move, self.to_move):
+      return true
+  return false
+

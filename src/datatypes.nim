@@ -15,6 +15,7 @@ type
                     # Should be int16 minimum (int8/uint8 can only represent 128/256 values)
   GoInt2* = uint32  # We use graph theory "Sum of square of vertex degrees" to speedily determine atari
                     # Should be uint32 or int64 minimum (rollover is fine)
+  GoFloat* = float32 # used in Monte-Carlo evaluation for move value.
 
   GoNatural* = range[0.GoInt .. high(GoInt)]
   GoNatural2* = range[0.GoInt2 .. high(GoInt2)]
@@ -141,15 +142,6 @@ type
     # ruleset
 
   ################################ Board  ###################################
-
-################################ Constants  ###################################
-
-const MaxNbMoves* = 512
-  # This is a soft limit on the max number of moves
-  # It is extremely rare to exceed 400 moves, longest game recorded is 411 moves.
-  # Yamabe Toshiro, 5p vs Hoshino Toshi 3p, Japan 1950
-
-################################ Constants  ###################################
 
 ################################ Go common logic ###################################
 
