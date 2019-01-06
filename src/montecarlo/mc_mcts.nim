@@ -51,7 +51,7 @@ func simulate[N: static[GoInt]](self: BoardState[N], double_komi: GoInt,
   result = self.score * 2 > double_komi
 
 
-func rave_urgency[N: static[GoInt]](self: Node[N]): GoFloat =
+func rave_urgency(self: Node): GoFloat =
 
   template wins: untyped = self.nb_wins.GoFloat
   template visits: untyped = self.nb_plays.GoFloat
@@ -117,7 +117,7 @@ func run_rollout[N: static[GoInt]](self: var MCTS_Context[N], board_state: Board
 
   # Get a pointer to the node.
   # TODO: This is unsafe but there is nothing that will cause memory to move
-  var node = self.nodes.mget(hash).addr
+  let node = self.nodes.mget(hash).addr
 
   # 1. Selection: Descend the tree until we reach a leaf
   while not (node.children.len == 0):
@@ -194,7 +194,10 @@ func search_best_move*[N: static[GoInt]](
     self.expand_node(board_state, root[], root_hash)
 
   for i in 0 ..< nb_simulations:
-    run_rollout[19](self, simulstate, root_hash) # TODO fix that
+    # TODO Error: cannot infer the value of the static param 'N'
+    #   Only workaround is to use a static int, a static GoInt will trigger
+    #   will trigger type mismatch down the line
+    run_rollout[GoInt(19)](self, simulstate, root_hash)
     deepCopy(simulstate, board_state)
 
   let (best_move, best_hash) = self.nodes[root_hash].best_move(self.nodes)

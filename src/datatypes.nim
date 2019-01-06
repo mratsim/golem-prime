@@ -102,7 +102,7 @@ type
 
     # TODO requires int and not int8 otherwise `$` doesn't catch it: https://github.com/nim-lang/Nim/issues/7611
 
-  EmptyIdx*[N: static[GoInt]] = range[-1.GOInt .. N * N]
+  EmptyIdx*[N: static[GoInt]] = range[-1.GoInt .. N * N]
 
   EmptyPoints*[N: static[GoInt]] = object
     # We need a set/hashset with the following properties:

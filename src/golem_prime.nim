@@ -68,7 +68,7 @@ when true and isMainModule:
   echo "\nEnding position"
   echo a.board
 
-when true and isMainModule:
+when false and isMainModule:
   proc simulate[N: static[GoInt]](a: BoardState[N], simulation_id: int) =
     a.reset()
 
@@ -129,7 +129,7 @@ when true and isMainModule:
   #   9x9  with int32 base type
   #        Note: this is without scoring and MCTS, just naive random playouts
 
-when true and isMainModule:
+when false and isMainModule:
   const N: GoInt = 19
   var a = newBoardState(N)
 
