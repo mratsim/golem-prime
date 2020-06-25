@@ -127,7 +127,7 @@ type
     groups*: Groups[N]             # Track the groups on board
     board*: Board[N]
     empty_points*: EmptyPoints[N]  # Keep track of empty intersections
-    nb_black_stones*: GoSint    # With black stones and empty positions we can recompute white score
+    nb_black_stones*: GoSint       # With black stones and empty positions we can recompute white score
     ko_pos*: Point[N]              # Last ko position
     to_move*: Player
 
