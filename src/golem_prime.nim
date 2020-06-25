@@ -13,7 +13,7 @@ when defined(march_native):
   {.passC:"-march=native".}
 
 when isMainModule:
-  const Size: GoInt = 19
+  const Size: GoSint = 19
 
   # Sanity check: Position conversion
   doAssert $pos("D4", Size) == "D4"
@@ -40,7 +40,7 @@ when isMainModule:
 
 
 when true and isMainModule:
-  proc simulate[N: static[GoInt]](a: BoardState[N], simulation_id: int) =
+  proc simulate[N: static[GoSint]](a: BoardState[N], simulation_id: int) =
     a.reset()
 
     # echo a.groups.repr
@@ -101,7 +101,7 @@ when true and isMainModule:
   #        Note: this is without scoring and MCTS, just naive random playouts
 
 when false and isMainModule:
-  const N: GoInt = 19
+  const N: GoSint = 19
   var a = newBoardState(N)
 
   echo "\nSize of BoardState on the stack: " & $sizeof(a)

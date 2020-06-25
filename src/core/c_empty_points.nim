@@ -5,27 +5,27 @@
 import ../datatypes
 
 func contains(s: EmptyPoints, point: Point): bool {.inline.} =
-  assert point.GoInt != -1
-  s.indices[point.GoInt] != -1
+  assert point.GoSint != -1
+  s.indices[point.GoSint] != -1
 
 func reset_border*(s: var EmptyPoints, point: Point) {.inline.} =
   ## Add a point to the border
-  s.indices[point.GoInt] = -1
+  s.indices[point.GoSint] = -1
 
 func reset_empty*(s: var EmptyPoints, point: Point) {.inline.} =
   ## Add a point to the empty list without pre-checks
-  s.indices[point.GoInt] = s.len
+  s.indices[point.GoSint] = s.len
   s.list[s.len] = point
   inc s.len
 
-func peek*[N: static[GoInt]](s: EmptyPoints[N]): Point[N] {.inline.} =
+func peek*[N: static[GoSint]](s: EmptyPoints[N]): Point[N] {.inline.} =
   ## Returns the last point in the set.
   ## Note: if an item is deleted this is NOT the last inserted point.
 
   assert s.len > 0, "Error: there is no empty points"
   s.list[s.len - 1]
 
-func incl*[N: static[GoInt]](s: var EmptyPoints[N], point: Point[N]) {.inline.} =
+func incl*[N: static[GoSint]](s: var EmptyPoints[N], point: Point[N]) {.inline.} =
   ## Add a Point to a set of EmptyPoints
   ## The Point should not be in EmptyPoints already. It will throw
   ## an error in debug mode otherwise
@@ -35,7 +35,7 @@ func incl*[N: static[GoInt]](s: var EmptyPoints[N], point: Point[N]) {.inline.} 
   # Bound checking
   assert s.len <= N * N, "EmptyPoints is already at max capacity."
 
-  s.indices[point.GoInt] = s.len
+  s.indices[point.GoSint] = s.len
   s.list[s.len] = point
   inc s.len
 
@@ -50,16 +50,16 @@ func excl*(s: var EmptyPoints, point: Point) {.inline.} =
   # We do constant time deletion by replacing the deleted point
   # by the last value in the list
 
-  let del_idx = s.indices[point.GoInt]
+  let del_idx = s.indices[point.GoSint]
 
-  s.indices[s.peek.GoInt] = del_idx   # Last value now points to deleted index
+  s.indices[s.peek.GoSint] = del_idx   # Last value now points to deleted index
   dec s.len
   s.list[del_idx] = s.list[s.len]     # Deleted item is now last value
 
   when compileOption("boundChecks"):
-    s.indices[point.GoInt] = -1       # Now we erase last value (take care of border case when we remove last value)
+    s.indices[point.GoSint] = -1       # Now we erase last value (take care of border case when we remove last value)
 
-iterator items*[N: static[GoInt]](s: EmptyPoints[N]): Point[N] =
+iterator items*[N: static[GoSint]](s: EmptyPoints[N]): Point[N] =
   ## Iterates over the empty points
 
   for i in 0 ..< s.len:

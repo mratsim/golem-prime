@@ -5,7 +5,7 @@
 # Implement Zobrist hashing: https://en.wikipedia.org/wiki/Zobrist_hashing
 
 import
-  ../mc_datatypes, ../datatypes, ../global_config,
+  ./mc_datatypes, ../datatypes, ../global_config,
   random
 
 const Mbs = Max_Board_Size
@@ -26,7 +26,7 @@ func seedZobrist(): array[(Mbs+2)*(Mbs+2), array[Player, Zobrist]] =
 
 const SeedZobrist = seedZobrist()
 
-func hash*[N: static[GoInt]](board: Board[N]): Zobrist =
+func hash*[N: static[GoSint]](board: Board[N]): Zobrist =
 
   static: assert N <= Max_Board_Size, "The max board size supported is " & $Max_Board_Size &
                                       ". Please change it in the global_config and recompile."
@@ -36,5 +36,5 @@ func hash*[N: static[GoInt]](board: Board[N]): Zobrist =
     if player in {Black, White}:
       result = result xor SeedZobrist[pos][player]
 
-func mix*[N: static[GoInt]](h: Zobrist, pos: Point[N], player: Player): Zobrist {.inline.}=
+func mix*[N: static[GoSint]](h: Zobrist, pos: Point[N], player: Player): Zobrist {.inline.}=
   h xor SeedZobrist[pos][player]

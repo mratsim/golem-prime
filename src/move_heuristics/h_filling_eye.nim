@@ -119,7 +119,7 @@
 import
   ../datatypes, ../core/core
 
-func dont_fill_own_true_eye*[N: static[GoInt]](self: BoardState[N], point: Point[N], player: Player): bool =
+func dont_fill_own_true_eye*[N: static[GoSint]](self: BoardState[N], point: Point[N], player: Player): bool =
   ## Prevent filling true eye if resulting group would be 6 stones or more
   ## Compared to regular "Don't fill your own eye" this should prevent blind spots
   ## where filling your own eye is actually a good move, while costing low simulation time.
@@ -132,7 +132,7 @@ func dont_fill_own_true_eye*[N: static[GoInt]](self: BoardState[N], point: Point
   # 1. Confirm if around is friend and foe
   # At the same time we count the number of stones in friendly groups
   var counted: set[GroupID[N]]
-  var nb_friendly: GoInt
+  var nb_friendly: GoSint
 
   for neighbor in point.neighbors:
     if self.board[neighbor] == opponent:
@@ -144,7 +144,7 @@ func dont_fill_own_true_eye*[N: static[GoInt]](self: BoardState[N], point: Point
 
   # 2. Determine if it's a true eye or a half-eye
   #    - At most 1 enemy stone or the border around
-  var countArray: array[Intersection, GoInt]
+  var countArray: array[Intersection, GoSint]
   for diag in point.diag_neighbors:
     inc countArray[self.board[diag]]
 
@@ -155,7 +155,7 @@ func dont_fill_own_true_eye*[N: static[GoInt]](self: BoardState[N], point: Point
   #      - 2 enemy stones in diagonal otherwise
   #    Everything else is a true eye or a half-eye.
 
-  if (countArray[opponent] + GoInt(countArray[Border]>0)) < 2 and nb_friendly > 4:
+  if (countArray[opponent] + GoSint(countArray[Border]>0)) < 2 and nb_friendly > 4:
     return true
 
   # 4. Otherwise, move elsewhere first.

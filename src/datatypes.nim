@@ -9,21 +9,20 @@
 
 type
   ################################ Coordinates ###################################
-  GoInt* = int32    # Easily switch the base int type for perf testing. 2 concerns are competing:
+  GoSInt* = int32   # Easily switch the base int type for perf testing. 2 concerns are competing:
                     #  - native word size so that there is no zero-extend/convert for register moves and array accesses
                     #  - Cache locality: If data can stay in L1 cache it's much better and smaller data: easier to move.
                     # Should be int16 minimum (int8/uint8 can only represent 128/256 values)
-  GoInt2* = uint32  # We use graph theory "Sum of square of vertex degrees" to speedily determine atari
+  GoUInt* = uint32  # We use graph theory "Sum of square of vertex degrees" to speedily determine atari
                     # Should be uint32 or int64 minimum (rollover is fine)
 
-  GoNatural* = range[0.GoInt .. high(GoInt)]
-  GoNatural2* = range[0.GoInt2 .. high(GoInt2)]
+  GoFloat* = float32
 
   # We index from 0
-  Coord*[N: static[GoInt]] = tuple[col, row: range[0.GoInt .. (N-1)]]
-  Point*[N: static[GoInt]] = distinct range[-1.GoInt .. (N+2) * (N+2) - 1]
+  Coord*[N: static[GoSint]] = tuple[col, row: range[0.GoSint .. (N-1)]]
+  Point*[N: static[GoSint]] = distinct range[-1.GoSint .. (N+2) * (N+2) - 1]
     # -1 is used for ko or group position: nil
-    # Can't use plain static[GoInt]: https://github.com/nim-lang/Nim/issues/7609
+    # Can't use plain static[GoSint]: https://github.com/nim-lang/Nim/issues/7609
 
   ################################ Coordinates ###################################
 
@@ -38,14 +37,14 @@ type
   MoveKind* = enum
     Play, Pass, Resign, Undo
 
-  Move*[N: static[GoInt]] = object
+  Move*[N: static[GoSint]] = object
     case kind*: MoveKind
     of Play:
       pos*: Point[N]
     else:
       discard
 
-  PlayerMove*[N: static[GoInt]] = tuple[color: Player, move: Move[N]]
+  PlayerMove*[N: static[GoSint]] = tuple[color: Player, move: Move[N]]
 
   ################################ Color & Moves ###################################
 
@@ -56,13 +55,13 @@ type
     # To detect atari we use the inequality that if we have n liberties: ∑(liberties²)/n ≤ (∑liberties)².
     # Equality only if each liberty is the same (contributed by the same point).
     # See: https://web.archive.org/web/20090404040318/http://computer-go.org/pipermail/computer-go/2007-November/012350.html
-    sum_square_degree_vertices*: GoNatural2
-    sum_degree_vertices*: GoNatural
+    sum_square_degree_vertices*: GoUint
+    sum_degree_vertices*: GoSint
     # Go Metadata (nb_stones acts as "rank" for disjoint sets "union by rank" optimization)
-    nb_stones*: GoNatural
-    nb_pseudo_libs*: GoNatural
+    nb_stones*: GoSint
+    nb_pseudo_libs*: GoSint
 
-  GroupID*[N: static[GoInt]] = distinct range[0.GoInt .. (N+2) * (N+2) - 1]
+  GroupID*[N: static[GoSint]] = distinct range[0.GoSint .. (N+2) * (N+2) - 1]
     # Alias to prevent directly accessing group metadata
     # without getting the groupID first
 
@@ -72,14 +71,14 @@ type
   # NextStones allow efficient iteration as an array-backed LinkedRing (circular linkedlist).
   # Arrays are chosen to minimize cache misses and avoid allocations within Monte-Carlo playouts.
 
-  # static[GoInt] can go beyond high(i8) for some reason
+  # static[GoSint] can go beyond high(i8) for some reason
   # TODO: use distinct for proper type-checking: Pending borrowing for static
   #        https://github.com/nim-lang/Nim/issues/7552
-  GroupsMetaPool*[N: static[GoInt]] = array[(N+2) * (N+2), GroupMetadata]
-  GroupIDs*[N: static[GoInt]]       = array[(N+2) * (N+2), GroupID[N]]
-  NextStones*[N: static[GoInt]]     = array[(N+2) * (N+2), Point[N]]
+  GroupsMetaPool*[N: static[GoSint]] = array[(N+2) * (N+2), GroupMetadata]
+  GroupIDs*[N: static[GoSint]]       = array[(N+2) * (N+2), GroupID[N]]
+  NextStones*[N: static[GoSint]]     = array[(N+2) * (N+2), Point[N]]
 
-  Groups*[N: static[GoInt]] = object
+  Groups*[N: static[GoSint]] = object
     ## Groups Common Fate Graph. Represented as an array-based disjoint-set.
     ##
     # Groups is allocated on the heap as it is quite large (>2MB) and
@@ -92,7 +91,7 @@ type
 
   ################################ Board  ###################################
 
-  Board*[N: static[GoInt]] = array[(N+2) * (N+2), Intersection]
+  Board*[N: static[GoSint]] = array[(N+2) * (N+2), Intersection]
     # To ease boarder detection in algorithms, borders are also represented as an (invalid) intersection
     # We use a column-major representation i.e:
     #  - A2 <-> (0, 1) has index "1" adjusted for borders
@@ -101,9 +100,9 @@ type
 
     # TODO requires int and not int8 otherwise `$` doesn't catch it: https://github.com/nim-lang/Nim/issues/7611
 
-  EmptyIdx*[N: static[GoInt]] = range[-1.GOInt .. N * N]
+  EmptyIdx*[N: static[GoSint]] = range[-1.GoSInt .. N * N]
 
-  EmptyPoints*[N: static[GoInt]] = object
+  EmptyPoints*[N: static[GoSint]] = object
     # We need a set/hashset with the following properties:
     #  - Can store up to ~500 elements at most (covered by `set` and `Hashset`)
     #  - Incl and Excl as fast as possible (in hot path) (covered by `set` and `Hashset`)
@@ -116,9 +115,9 @@ type
     # - An (array of values + length) present in the set (allows fast random pick).
     indices*: array[(N+2) * (N+2), EmptyIdx[N]]
     list*: array[N * N, Point[N]]
-    len*: GoNatural
+    len*: GoSint
 
-  BoardState*[N: static[GoInt]] = ref object
+  BoardState*[N: static[GoSint]] = ref object
     ## Dynamic data related to the board
     # Only store what is essential for board evaluation as
     # trees of board state are generated thousands of time per second
@@ -128,13 +127,13 @@ type
     groups*: Groups[N]             # Track the groups on board
     board*: Board[N]
     empty_points*: EmptyPoints[N]  # Keep track of empty intersections
-    nb_black_stones*: GoNatural    # With black stones and empty positions we can recompute white score
+    nb_black_stones*: GoSint    # With black stones and empty positions we can recompute white score
     ko_pos*: Point[N]              # Last ko position
     to_move*: Player
 
-  GameState*[N: static[GoInt]] = object
+  GameState*[N: static[GoSint]] = object
     ## Metadata related to the game. Everything that is not copied
-    ## uring Monte-Carlo playouts should be here
+    ## during Monte-Carlo playouts should be here
     board_state*: BoardState[N]
     prev_moves*: seq[PlayerMove[N]]
     komi*: float32
@@ -153,17 +152,17 @@ const MaxNbMoves* = 512
 
 ################################ Go common logic ###################################
 
-iterator neighbors*[N: static[GoInt]](idx: Point[N]): Point[N] =
-  yield Point[N] idx.GoInt - 1     # left
-  yield Point[N] idx.GoInt + 1     # right
-  yield Point[N] idx.GoInt - (N+2) # up
-  yield Point[N] idx.GoInt + (N+2) # down
+iterator neighbors*[N: static[GoSint]](idx: Point[N]): Point[N] =
+  yield Point[N] idx.GoSint - 1     # left
+  yield Point[N] idx.GoSint + 1     # right
+  yield Point[N] idx.GoSint - (N+2) # up
+  yield Point[N] idx.GoSint + (N+2) # down
 
-iterator diag_neighbors*[N: static[GoInt]](idx: Point[N]): Point[N] =
-  yield Point[N] idx.GoInt - (N+2) - 1 # upper-left
-  yield Point[N] idx.GoInt - (N+2) + 1 # upper-right
-  yield Point[N] idx.GoInt + (N+2) - 1 # bottom-left
-  yield Point[N] idx.GoInt + (N+2) + 1 # bottom-right
+iterator diag_neighbors*[N: static[GoSint]](idx: Point[N]): Point[N] =
+  yield Point[N] idx.GoSint - (N+2) - 1 # upper-left
+  yield Point[N] idx.GoSint - (N+2) + 1 # upper-right
+  yield Point[N] idx.GoSint + (N+2) - 1 # bottom-left
+  yield Point[N] idx.GoSint + (N+2) + 1 # bottom-right
 
 const opponents: array[Player, Player] = [
   Black: Player White,
@@ -183,27 +182,27 @@ template genIndexersN(Container, Idx, Value) =
   # TODO: Will be improved with borrowing for static:
   #       https://github.com/nim-lang/Nim/issues/7552
 
-  func `[]`*[N: static[GoInt]](container: Container[N], idx: Idx[N]): Value[N] {.inline.} =
-    container[idx.GoInt]
+  func `[]`*[N: static[GoSint]](container: Container[N], idx: Idx[N]): Value[N] {.inline.} =
+    container[idx.GoSint]
 
-  func `[]`*[N: static[GoInt]](container: var Container[N], idx: Idx[N]): var Value[N] {.inline.} =
-    container[idx.GoInt]
+  func `[]`*[N: static[GoSint]](container: var Container[N], idx: Idx[N]): var Value[N] {.inline.} =
+    container[idx.GoSint]
 
-  func `[]=`*[N: static[GoInt]](container: var Container[N], idx: Idx[N], val: Value[N]){.inline.} =
-    container[idx.GoInt]
+  func `[]=`*[N: static[GoSint]](container: var Container[N], idx: Idx[N], val: Value[N]){.inline.} =
+    container[idx.GoSint]
 
 template genIndexers(Container, Idx, Value) =
   # TODO: Will be improved with borrowing for static:
   #       https://github.com/nim-lang/Nim/issues/7552
 
-  func `[]`*[N: static[GoInt]](container: Container[N], idx: Idx[N]): Value {.inline.} =
-    container[idx.GoInt]
+  func `[]`*[N: static[GoSint]](container: Container[N], idx: Idx[N]): Value {.inline.} =
+    container[idx.GoSint]
 
-  func `[]`*[N: static[GoInt]](container: var Container[N], idx: Idx[N]): var Value {.inline.} =
-    container[idx.GoInt]
+  func `[]`*[N: static[GoSint]](container: var Container[N], idx: Idx[N]): var Value {.inline.} =
+    container[idx.GoSint]
 
-  func `[]=`*[N: static[GoInt]](container: var Container[N], idx: Idx[N], val: Value){.inline.} =
-    container[idx.GoInt] = val
+  func `[]=`*[N: static[GoSint]](container: var Container[N], idx: Idx[N], val: Value){.inline.} =
+    container[idx.GoSint] = val
 
 genIndexers(GroupsMetaPool, GroupID, GroupMetadata)
 genIndexersN(GroupIDs, Point, GroupID)
@@ -211,6 +210,6 @@ genIndexersN(NextStones, Point, Point)
 genIndexers(Board, Point, Intersection)
 
 func `==`*(val1, val2: Point or GroupID): bool {.inline.}=
-  val1.GoInt == val2.GoInt
+  val1.GoSint == val2.GoSint
 
 ################# Strongly checked indexers and iterators ##########################

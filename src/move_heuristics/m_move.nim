@@ -16,13 +16,13 @@ when random_seed == 0:
 else:
   randomize random_seed
 
-proc pick_idx[N: static[GoInt]](s: EmptyPoints[N]): EmptyIdx[N] {.inline.}=
+proc pick_idx[N: static[GoSint]](s: EmptyPoints[N]): EmptyIdx[N] {.inline.}=
   ## Generate a random move from a set of empty points
   ## Nim random uses Xoroshiro128+ PRNG which is very fast
   ## and produces high quality random numbers
-  rand(0.GoInt .. GoInt(s.len-1))
+  rand(0.GoSint .. GoSint(s.len-1))
 
-func play*[N: static[GoInt]](self: BoardState[N], point: Point[N], player: Player) =
+func play*[N: static[GoSint]](self: BoardState[N], point: Point[N], player: Player) =
   ## Play a stone
   ## Move is assumed valid. Illegality should be checked beforehand
 
@@ -39,7 +39,7 @@ func play*[N: static[GoInt]](self: BoardState[N], point: Point[N], player: Playe
                   self.empty_points.peek
                 else: Point[N](-1)
 
-func play*[N: static[GoInt]](self: BoardState[N], point: Point[N]) {.inline.}=
+func play*[N: static[GoSint]](self: BoardState[N], point: Point[N]) {.inline.}=
   self.play point, self.to_move
 
 func surrounded_but_legal(self: BoardState, point: Point, player: Player): bool =
@@ -58,7 +58,7 @@ func surrounded_but_legal(self: BoardState, point: Point, player: Player): bool 
       return true
   return false
 
-func is_legalish_move[N: static[GoInt]](self: BoardState[N], point: Point[N], player: Player): bool =
+func is_legalish_move[N: static[GoSint]](self: BoardState[N], point: Point[N], player: Player): bool =
   ## Check if a move looks legal
   ## This does not check for superko for efficiency reason.
   ## They are very rare and we can just take the second best move
@@ -107,7 +107,7 @@ func is_legalish_move[N: static[GoInt]](self: BoardState[N], point: Point[N], pl
 
   return false # Opponent's true eye or filling the dame will suicide.
 
-proc random_move*[N: static[GoInt]](self: BoardState[N], player: Player): Point[N] =
+proc random_move*[N: static[GoSint]](self: BoardState[N], player: Player): Point[N] =
 
   assert self.empty_points.len > 0, "It seems like the whole board is completely full of stones, " &
     "not even eyes are left. Are you playing go?"
@@ -128,5 +128,5 @@ proc random_move*[N: static[GoInt]](self: BoardState[N], player: Player): Point[
       # Stop if we checked every candidate
       return Point[N](-1)
 
-proc random_move*[N: static[GoInt]](self: BoardState[N]): Point[N] {.inline.}=
+proc random_move*[N: static[GoSint]](self: BoardState[N]): Point[N] {.inline.}=
   self.random_move self.to_move

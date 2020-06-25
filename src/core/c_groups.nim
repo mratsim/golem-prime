@@ -9,31 +9,31 @@ import
 
 ################# Initialization ######################
 
-func reset_members*[N: static[GoInt]](groups: var Groups[N]) =
+func reset_members*[N: static[GoSint]](groups: var Groups[N]) =
   for idx, group_id in mpairs(groups.id):
     group_id = GroupID[N](idx)
   for next_stone in groups.next_stones.mitems:
     next_stone = Point[N](-1)
 
 func reset_meta*(self: var GroupMetadata) {.inline.} =
-  sum_square_degree_vertices = 0.GoInt2
-  sum_degree_vertices = 0.GoInt
-  nb_stones = 0.GoInt
-  nb_pseudo_libs = 0.GoInt
+  sum_square_degree_vertices = 0.GoUint
+  sum_degree_vertices = 0.GoSint
+  nb_stones = 0.GoSint
+  nb_pseudo_libs = 0.GoSint
 
 func reset_border*(self: var GroupMetadata) {.inline.} =
   ## Special values for the border stones. They have infinite liberties
   ## and should never be in atari
-  sum_square_degree_vertices = high(GoInt2)
-  sum_degree_vertices = high(GoInt)
-  nb_pseudo_libs = 4.GoInt
-  nb_stones = 0.GoInt
+  sum_square_degree_vertices = high(GoUint)
+  sum_degree_vertices = high(GoSint)
+  nb_pseudo_libs = 4.GoSint
+  nb_stones = 0.GoSint
 
 ################# Initialization ######################
 
 ########## Iteration and group accessors ##############
 
-iterator groupof*[N: static[GoInt]](self: BoardState, start_stone: Point[N]): Point[N] =
+iterator groupof*[N: static[GoSint]](self: BoardState, start_stone: Point[N]): Point[N] =
   ## Iterates over the all the stones of the same group as the input
 
   assert start_stone != Point[N](-1)
@@ -54,13 +54,13 @@ iterator groupof*[N: static[GoInt]](self: BoardState, start_stone: Point[N]): Po
 # Those operations are done at the board level to avoid double indirection
 # when checking the color of the neighboring stones.
 
-func group_id*[N: static[GoInt]](self: BoardState[N], point: Point[N]): var GroupID[N] {.inline.}=
+func group_id*[N: static[GoSint]](self: BoardState[N], point: Point[N]): var GroupID[N] {.inline.}=
   self.groups.id[point]
 
 func group*(self: BoardState, point: Point): var GroupMetadata {.inline.}=
   self.groups.metadata[self.groups.id[point]]
 
-func group_next*[N: static[GoInt]](self: BoardState[N], point: Point[N]): var Point[N] {.inline.}=
+func group_next*[N: static[GoSint]](self: BoardState[N], point: Point[N]): var Point[N] {.inline.}=
   self.groups.next_stones[point]
 
 ########## Iteration and group accessors ##############
@@ -70,17 +70,17 @@ func group_next*[N: static[GoInt]](self: BoardState[N], point: Point[N]): var Po
 func add_as_lib*(self: var GroupMetadata, point: Point) {.inline.} =
   ## Add an adjacent point as a liberty to a group
   inc self.nb_pseudo_libs
-  self.sum_degree_vertices += point.GoInt
-  self.sum_square_degree_vertices += point.GoInt2 * point.GoInt2
+  self.sum_degree_vertices += point.GoSint
+  self.sum_square_degree_vertices += point.GoUint * point.GoUint
 
 func remove_from_lib*(self: var GroupMetadata, point: Point) {.inline.} =
   ## Remove an adjacent point from a group liberty
   dec self.nb_pseudo_libs
-  self.sum_degree_vertices -= point.GoInt
-  self.sum_square_degree_vertices -= point.GoInt2 * point.GoInt2
+  self.sum_degree_vertices -= point.GoSint
+  self.sum_square_degree_vertices -= point.GoUint * point.GoUint
 
 func is_dead*(self: GroupMetadata): bool {.inline.}=
-  nb_pseudo_libs == 0.GoInt
+  nb_pseudo_libs == 0.GoSint
 
 func is_in_atari*(self: GroupMetadata): bool {.inline.}=
   # Graph theory
@@ -88,7 +88,7 @@ func is_in_atari*(self: GroupMetadata): bool {.inline.}=
   # Equality only if each liberty is the same (contributed by the same point).
   # See: https://web.archive.org/web/20090404040318/http://computer-go.org/pipermail/computer-go/2007-November/012350.html
   #
-  nb_pseudo_libs.GoInt2 * sum_square_degree_vertices == sum_degree_vertices.GoInt2 * sum_degree_vertices.GoInt2
+  nb_pseudo_libs.GoUint * sum_square_degree_vertices == sum_degree_vertices.GoUint * sum_degree_vertices.GoUint
 
 ################# Liberties  ##########################
 

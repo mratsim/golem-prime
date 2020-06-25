@@ -24,7 +24,7 @@ func remove_from_neighbors_libs*(self: BoardState, point: Point) =
 
 ########## Initialization ##########
 
-func singleton[N: static[GoInt]](self: BoardState[N], color: range[Empty..White], point: Point[N]) =
+func singleton[N: static[GoSint]](self: BoardState[N], color: range[Empty..White], point: Point[N]) =
   ## Create a new group from a single stone
   ## Empty intersections also form a singleton group
 
@@ -36,7 +36,7 @@ func singleton[N: static[GoInt]](self: BoardState[N], color: range[Empty..White]
 
   self.add_neighboring_libs point
 
-func reset*[N: static[GoInt]](self: BoardState[N]) =
+func reset*[N: static[GoSint]](self: BoardState[N]) =
   ## Reset the board state without reallocating
   ## and triggering the GC
 
@@ -67,7 +67,7 @@ func reset*[N: static[GoInt]](self: BoardState[N]) =
     if stone == Empty:
       self.add_neighboring_libs Point[N](idx)
 
-func newBoardState*(size: static[GoInt]): BoardState[size] =
+func newBoardState*(size: static[GoSint]): BoardState[size] =
   new result
   result.reset()
 
@@ -129,7 +129,7 @@ func merge_with_groups*(self: BoardState, point: Point, color: Player) =
 
   # We use an "union-by-rank" algorithm, merging the smallest groups into the biggest.
   var
-    max_nb_stones: GoInt
+    max_nb_stones: GoSint
     max_neighbor: Point
 
   for neighbor in point.neighbors:
@@ -189,15 +189,15 @@ func capture_deads_around*(self: BoardState, point: Point, color: Player) =
 
 ########## End game ##########
 
-func black_score*[N: static[GoInt]](self: BoardState[N]): GoInt =
+func black_score*[N: static[GoSint]](self: BoardState[N]): GoSint =
   # Returns the score using chinese rules.
   # Score is positive if black wins, negative if white wins.
 
   # let nb_white_stones = N*N - self.nb_black_stones - self.empty_points.len
-  result = 2.GoInt * self.nb_black_stones - N*N + self.empty_points.len
+  result = 2.GoSint * self.nb_black_stones - N*N + self.empty_points.len
 
   for empty_p in items(self.empty_points):
-    var black, white: GoInt
+    var black, white: GoSint
 
     for neighbor in empty_p.neighbors:
       let color = self.board[neighbor]
